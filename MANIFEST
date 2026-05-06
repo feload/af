@@ -1,0 +1,17 @@
+# af installable files
+# Format: <source-in-framework> <target-in-host>
+# Lines starting with '#' and blank lines are ignored.
+
+agents/lead.md                   .af/agents/lead.md
+agents/developer.md              .af/agents/developer.md
+templates/spec.md                .af/templates/spec.md
+templates/bug.md                 .af/templates/bug.md
+docs/workflow.md                 .af/docs/workflow.md
+docs/architecture.md             .af/docs/architecture.md
+docs/domain.md                   .af/docs/domain.md
+docs/conventions.md              .af/docs/conventions.md
+commands/create-spec.md          .claude/commands/create-spec.md
+commands/create-bug.md           .claude/commands/create-bug.md
+commands/implement-spec.md       .claude/commands/implement-spec.md
+commands/fix-bug.md              .claude/commands/fix-bug.md
+commands/init-af.md              .claude/commands/init-af.md

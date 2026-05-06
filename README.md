@@ -94,17 +94,17 @@ Existing files are never overwritten. If you already have `AGENTS.md` or `CLAUDE
 ### Feature work
 
 1. **PM creates a card** in whatever tracker they use (Linear, Jira, Trello — external to af).
-2. **PM runs `/create-spec`** and describes the feature to the Lead.
+2. **PM runs `/af-create-spec`** and describes the feature to the Lead.
 3. **Lead asks one clarifying question at a time** until the feature is clear, then drafts a SPEC using the [SPEC template](templates/spec.md).
 4. **PM reviews and confirms.** Status flips from `draft` to `ready`. SPEC is saved as `.af/specs/active/SPEC-####.md`.
-5. **PM runs `/implement-spec`** and hands the SPEC to the Developer.
+5. **PM runs `/af-implement-spec`** and hands the SPEC to the Developer.
 6. **Developer reads the SPEC, implements each subtask in order**, marks each `[x]`, and stops at the end.
 7. **PM verifies and approves.** Developer opens a PR.
 8. **PM merges and archives** the SPEC into `.af/specs/archived/`.
 
 ### Bug work
 
-Same shape, but `/create-bug` lets the Lead read source files (narrowly — only files related to the bug) to identify root cause. `/fix-bug` requires a regression test.
+Same shape, but `/af-create-bug` lets the Lead read source files (narrowly — only files related to the bug) to identify root cause. `/af-fix-bug` requires a regression test.
 
 ## SPEC quality bar
 

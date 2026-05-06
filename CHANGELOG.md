@@ -2,6 +2,11 @@
 
 All notable changes to the af framework are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## v0.2.0 — 2026-05-06
+
+### Changed
+- Slash commands now use the `/af-` namespace prefix: `/create-spec` → `/af-create-spec`, `/create-bug` → `/af-create-bug`, `/implement-spec` → `/af-implement-spec`, `/fix-bug` → `/af-fix-bug`. `/init-af` is unchanged.
+
 ## v0.1.0 — 2026-05-06
 
 Initial release.

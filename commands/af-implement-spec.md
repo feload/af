@@ -1,4 +1,4 @@
-# /implement-spec
+# /af-implement-spec
 
 **Trigger:** PM hands the Developer a SPEC file to implement.
 

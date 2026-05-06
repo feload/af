@@ -1,4 +1,4 @@
-# /create-spec
+# /af-create-spec
 
 **Trigger:** PM describes a feature or bug to the Lead.
 

@@ -33,7 +33,7 @@ When changing an agent, command, or template:
 
 ## Slash commands during framework development
 
-The slash commands in `commands/` are only usable in a *host project* where af is installed. When working on this repo, `/create-spec` etc. are not directly available — read the markdown files when reasoning about behavior, or run `install.sh` recursively against this repo.
+The slash commands in `commands/` are only usable in a *host project* where af is installed. When working on this repo, `/af-create-spec` etc. are not directly available — read the markdown files when reasoning about behavior, or run `install.sh` recursively against this repo.
 
 ## Testing changes locally
 

@@ -1,4 +1,4 @@
-# /fix-bug
+# /af-fix-bug
 
 **Trigger:** PM hands the Developer a BUG SPEC to fix.
 
@@ -9,6 +9,6 @@
 4. Write the regression test — mandatory, not optional
 5. Notify PM when complete
 
-**Key difference from /implement-spec:** Regression test is always required. No fix is complete without it.
+**Key difference from /af-implement-spec:** Regression test is always required. No fix is complete without it.
 
 **Output:** Changed files + regression test + updated BUG SPEC. PM must approve before PR is created.

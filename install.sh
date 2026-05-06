@@ -80,9 +80,9 @@ This project uses the **af** AI-assisted development framework.
 
 ## Workflow
 
-- The PM (you) hands work to the Lead via `/create-spec` or `/create-bug`.
+- The PM (you) hands work to the Lead via `/af-create-spec` or `/af-create-bug`.
 - The Lead writes a SPEC into `.af/specs/active/`. PM confirms.
-- The Developer implements via `/implement-spec` or `/fix-bug`.
+- The Developer implements via `/af-implement-spec` or `/af-fix-bug`.
 - PM approves; PR is opened; SPEC moves to `.af/specs/archived/`.
 
 Full rules: `.af/docs/workflow.md`. Role definitions: `.af/agents/`.

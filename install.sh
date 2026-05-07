@@ -178,6 +178,12 @@ Full rules: `.af/docs/workflow.md`. Role definitions: `.af/agents/`.
 
 Run `/init-af` in Claude Code to populate `.af/docs/architecture.md`,
 `.af/docs/domain.md`, and `.af/docs/conventions.md` from the codebase.
+
+## Updating
+
+Re-run `install.sh` to refresh the global cache, then `/update-af` in this
+repo to bring `.af/` to that version. `/update-af v0.X.0` targets a specific
+version. Specs and host-populated docs are preserved.
 AGENTS_EOF
     printf "  write  AGENTS.md\n"
 else

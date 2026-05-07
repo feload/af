@@ -43,7 +43,7 @@ This places slash commands in `~/.claude/commands/` and caches framework files i
 To pin a specific version:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh -s -- v0.4.0
+curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh -s -- v0.5.0
 ```
 
 For per-project install instead (slash commands and framework files all live inside the repo):
@@ -57,8 +57,12 @@ For the security-conscious — review before running:
 ```sh
 curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh -o af-install.sh
 less af-install.sh
-sh af-install.sh v0.4.0
+sh af-install.sh v0.5.0
 ```
+
+### Updating an existing repo
+
+When a new af version ships, re-run `install.sh` to refresh the global cache, then run `/update-af` inside any repo to bring its `.af/` up to that version. To target a specific version directly, pass it as an argument: `/update-af v0.5.0` (the helper fetches it from GitHub if not already cached). Updates overwrite framework files and bump `.af/VERSION`; they never touch `.af/specs/`. Host-populated docs (`architecture.md`, `domain.md`, `conventions.md`) are diffed against the new placeholder and you decide per file whether to keep, overwrite, or merge.
 
 ### Requirements
 
@@ -71,16 +75,18 @@ sh af-install.sh v0.4.0
 **Global install** (`install.sh`):
 
 ```
-~/.claude/commands/         # /af-* and /init-af slash commands
+~/.claude/commands/         # /af-* workflow commands and /init-af, /update-af lifecycle commands
 ~/.af/
-├── current                 # text file — active version (e.g. "v0.4.0")
+├── current                 # text file — active version (e.g. "v0.5.0")
 └── <version>/
     ├── VERSION
     ├── MANIFEST
     ├── agents/
     ├── templates/
     ├── docs/
-    └── bin/bootstrap-here.sh
+    └── bin/
+        ├── bootstrap-here.sh
+        └── update-here.sh
 ```
 
 **Per-repo bootstrap** (`/init-af`, or `install.sh --local`):

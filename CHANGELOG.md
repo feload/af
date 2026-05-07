@@ -2,6 +2,14 @@
 
 All notable changes to the af framework are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## v0.5.0 — 2026-05-07
+
+### Added
+- `/update-af` slash command + `bin/update-here.sh` helper. Brings an already-initialized repo's `.af/` up to a newer framework version. Bare `/update-af` catches the repo up to whatever `~/.af/current` points to; `/update-af v0.5.0` fetches a specific version from GitHub if not already cached. Overwrites framework files (`agents/`, `templates/`, `docs/workflow.md`, `bin/`) and bumps `.af/VERSION`. Never touches `.af/specs/`. Host-populated docs (`architecture.md`, `domain.md`, `conventions.md`) are diffed against the target's placeholder and the PM is asked per file whether to keep, overwrite, or merge.
+
+### Conventions
+- Lifecycle commands (initialize, update, future remove) use the `*-af` suffix: `/init-af`, `/update-af`. Workflow commands use the `af-*` prefix: `/af-create-card`, `/af-create-spec`, etc.
+
 ## v0.4.0 — 2026-05-07
 
 ### Added

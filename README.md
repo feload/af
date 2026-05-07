@@ -20,8 +20,8 @@ The result: short, predictable AI sessions that stop where you expect them to.
 PM: create card (external tracker — optionally via /af-create-card)
 PM → Lead: share card
 Lead: write SPEC → PM confirms → status: ready
-Developer: implement subtasks → notify PM
-PM: review + test → status: approved
+Developer: implement subtasks + write tests → hand off test tree and run commands to PM
+PM: review + run tests → status: approved
 Developer: create PR
 PM: approve PR → close card
 ```
@@ -129,13 +129,13 @@ Existing files are never overwritten. If you already have `AGENTS.md` or `CLAUDE
 3. **Lead asks one clarifying question at a time** until the feature is clear, then drafts a SPEC using the [SPEC template](templates/spec.md).
 4. **PM reviews and confirms.** Status flips from `draft` to `ready`. SPEC is saved as `.af/specs/active/SPEC-####.md`.
 5. **PM runs `/af-implement-spec`** and hands the SPEC to the Developer.
-6. **Developer reads the SPEC, implements each subtask in order**, marks each `[x]`, and stops at the end.
-7. **PM verifies and approves.** Developer opens a PR.
+6. **Developer reads the SPEC, implements each subtask in order**, marks each `[x]`, and writes tests organized to read as a description of the application's behavior. Developer does not run the test suite — instead prints a tree of the tests added or modified in the session and hands the PM the exact commands to run them (and may optionally offer to run them on the PM's behalf).
+7. **PM runs the tests, verifies, and approves.** Developer opens a PR.
 8. **PM merges and archives** the SPEC into `.af/specs/archived/`.
 
 ### Bug work
 
-Same shape, but `/af-create-bug` lets the Lead read source files (narrowly — only files related to the bug) to identify root cause. `/af-fix-bug` requires a regression test.
+Same shape, but `/af-create-bug` lets the Lead read source files (narrowly — only files related to the bug) to identify root cause. `/af-fix-bug` requires a regression test. The same test handoff applies: Developer prints the test tree and the run commands, PM runs them.
 
 ## SPEC quality bar
 

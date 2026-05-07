@@ -2,6 +2,12 @@
 
 All notable changes to the af framework are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## v0.6.0 — 2026-05-07
+
+### Changed
+- `agents/developer.md` — Developer no longer runs the test suite by default. After implementing, the Developer prints a tree of the tests added or modified in the session (scoped to the changes, not the full suite), provides the exact commands the PM should run, and may optionally offer to run them on the PM's behalf. Tests must also be organized to read as a description of the application's behavior — grouped by feature/scenario, plainly named, structured setup → action → outcome — so the PM can confirm coverage from the names alone.
+- `commands/af-implement-spec.md` and `commands/af-fix-bug.md` — handoff step updated to require the test tree + run commands when notifying the PM.
+
 ## v0.5.0 — 2026-05-07
 
 ### Added

@@ -26,6 +26,14 @@ After implementing all subtasks, write tests for:
 
 Do not write tests for internal wiring, trivial getters, or anything not connected to the SPEC's outcome. Prefer tests that verify behavior over tests that verify implementation.
 
+Organize tests so they read as a description of the application's behavior. Group them by feature or scenario, name them in plain language, and structure each test as setup → action → expected outcome. Reading the test names alone should make the SPEC's behavior obvious to the PM.
+
+## Handoff to PM
+Do not run the test suite yourself. When notifying the PM that the implementation is done:
+1. Print a tree of the tests added or modified in this session — only those, not the full suite — so the PM can confirm the behavior coverage matches the SPEC.
+2. Provide the exact commands the PM should run (the affected tests, the full suite if relevant, and any setup steps).
+3. Optionally offer to run the tests yourself — the PM decides whether to accept.
+
 ## Constraints
 - Do not implement anything not listed in the SPEC
 - Do not change files outside the subtask scope

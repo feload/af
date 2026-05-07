@@ -12,10 +12,10 @@ effort: high
 2. Read `.af/specs/active/BUG-####.md` — verify status is `ready`
 3. Apply fix steps in order, marking each `[x]` when done
 4. Write the regression test — mandatory, not optional
-5. Notify PM when complete
+5. Notify PM when complete — print a tree of the tests added or modified in this session (the regression test plus any others), provide the commands PM should run, and optionally offer to run them. Do not run the test suite yourself unless PM accepts.
 
 **Key difference from /af-implement-spec:** Regression test is always required. No fix is complete without it.
 
-**Output:** Changed files + regression test + updated BUG SPEC. PM must approve before PR is created.
+**Output:** Changed files + regression test + updated BUG SPEC + test tree and run commands for PM. PM must approve before PR is created.
 
 **Stop here.** Do not pick up another BUG SPEC. Do not write a new SPEC. The next piece of work starts in a separate session.

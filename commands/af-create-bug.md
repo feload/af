@@ -1,3 +1,8 @@
+---
+model: opus
+effort: xhigh
+---
+
 # /af-create-bug
 
 **Trigger:** PM reports a bug to the Lead.
@@ -13,3 +18,5 @@
 **Key difference from /af-create-spec:** Lead is allowed to read source files to identify root cause — but only files directly related to the bug, not broad exploration.
 
 **Output:** Path to the confirmed BUG SPEC file.
+
+**Stop here.** Do not load the Developer. Do not start fixing. The PM runs `/af-fix-bug` in a separate session when they're ready.

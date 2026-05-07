@@ -2,6 +2,18 @@
 
 All notable changes to the af framework are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## v0.4.0 — 2026-05-07
+
+### Added
+- `/af-create-card` — backend-agnostic helper for creating cards (tracker work items via MCP, file rows, links, etc.). The PM tells the agent where cards live and the command helps draft and create them. Can produce multiple cards in one session.
+- *Session focus* section in `docs/workflow.md`: each command does one phase and stops; the agent does not auto-progress to the next phase.
+- Per-command `model` and `effort` frontmatter so each phase runs on the right tier: `/af-create-card` sonnet/medium, `/af-create-spec` opus/high, `/af-create-bug` opus/xhigh, `/af-implement-spec` sonnet/medium, `/af-fix-bug` sonnet/high, `/init-af` sonnet/medium.
+
+### Changed
+- Every command (`/af-create-card`, `/af-create-spec`, `/af-create-bug`, `/af-implement-spec`, `/af-fix-bug`) now ends with an explicit "Stop here" rule that prevents auto-progressing into the next workflow phase.
+- `agents/lead.md` and `agents/developer.md` reinforce the same rule.
+- Generated `AGENTS.md` boilerplate (in `install.sh`) mentions the optional `/af-create-card` step.
+
 ## v0.3.0 — 2026-05-06
 
 ### Added

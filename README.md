@@ -17,7 +17,7 @@ The result: short, predictable AI sessions that stop where you expect them to.
 ## How it works
 
 ```
-PM: create card (external tracker)
+PM: create card (external tracker — optionally via /af-create-card)
 PM → Lead: share card
 Lead: write SPEC → PM confirms → status: ready
 Developer: implement subtasks → notify PM
@@ -25,6 +25,8 @@ PM: review + test → status: approved
 Developer: create PR
 PM: approve PR → close card
 ```
+
+Each step is its own session — the assistant does one phase per command and stops, so there's no drift across phases.
 
 Bugs follow the same shape, with one extra rule: every fix ships with a regression test.
 
@@ -41,7 +43,7 @@ This places slash commands in `~/.claude/commands/` and caches framework files i
 To pin a specific version:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh -s -- v0.3.0
+curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh -s -- v0.4.0
 ```
 
 For per-project install instead (slash commands and framework files all live inside the repo):
@@ -55,7 +57,7 @@ For the security-conscious — review before running:
 ```sh
 curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh -o af-install.sh
 less af-install.sh
-sh af-install.sh v0.3.0
+sh af-install.sh v0.4.0
 ```
 
 ### Requirements
@@ -71,7 +73,7 @@ sh af-install.sh v0.3.0
 ```
 ~/.claude/commands/         # /af-* and /init-af slash commands
 ~/.af/
-├── current                 # text file — active version (e.g. "v0.3.0")
+├── current                 # text file — active version (e.g. "v0.4.0")
 └── <version>/
     ├── VERSION
     ├── MANIFEST
@@ -116,8 +118,8 @@ Existing files are never overwritten. If you already have `AGENTS.md` or `CLAUDE
 
 ### Feature work
 
-1. **PM creates a card** in whatever tracker they use (Linear, Jira, Trello — external to af).
-2. **PM runs `/af-create-spec`** and describes the feature to the Lead.
+1. **PM creates a card** in whatever tracker they use (Linear, Jira, Trello, Azure DevOps — external to af). Optionally use `/af-create-card`, a backend-agnostic helper that drafts and submits cards via whatever tool the PM specifies (MCP, CLI, file, manual paste).
+2. **PM runs `/af-create-spec`** in a new session and describes the feature to the Lead.
 3. **Lead asks one clarifying question at a time** until the feature is clear, then drafts a SPEC using the [SPEC template](templates/spec.md).
 4. **PM reviews and confirms.** Status flips from `draft` to `ready`. SPEC is saved as `.af/specs/active/SPEC-####.md`.
 5. **PM runs `/af-implement-spec`** and hands the SPEC to the Developer.

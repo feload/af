@@ -1,3 +1,8 @@
+---
+model: sonnet
+effort: high
+---
+
 # /af-fix-bug
 
 **Trigger:** PM hands the Developer a BUG SPEC to fix.
@@ -12,3 +17,5 @@
 **Key difference from /af-implement-spec:** Regression test is always required. No fix is complete without it.
 
 **Output:** Changed files + regression test + updated BUG SPEC. PM must approve before PR is created.
+
+**Stop here.** Do not pick up another BUG SPEC. Do not write a new SPEC. The next piece of work starts in a separate session.

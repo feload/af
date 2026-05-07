@@ -24,3 +24,4 @@ The SPEC is good enough when a Developer reading it knows:
 - Keep subtasks independently implementable and sequenced correctly
 - Mark status `draft` until PM confirms, then `ready`
 - Write in plain English — no emojis
+- Stop after the SPEC is saved. Do not load the Developer, do not start implementing. SPEC writing is the end of the Lead's session — implementation happens later in a separate session.

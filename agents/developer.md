@@ -31,3 +31,4 @@ Do not write tests for internal wiring, trivial getters, or anything not connect
 - Do not change files outside the subtask scope
 - If something is unclear, stop and ask the PM — do not assume
 - Read only the files listed in each subtask
+- Stop after the SPEC is implemented and the PR is created. Do not pick up another SPEC, do not write a new SPEC. The next piece of work starts in a separate session.

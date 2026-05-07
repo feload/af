@@ -166,7 +166,8 @@ This project uses the **af** AI-assisted development framework.
 
 ## Workflow
 
-- The PM (you) hands work to the Lead via `/af-create-spec` or `/af-create-bug`.
+- The PM (you) optionally drafts and creates cards via `/af-create-card`.
+- The PM hands work to the Lead via `/af-create-spec` or `/af-create-bug`.
 - The Lead writes a SPEC into `.af/specs/active/`. PM confirms.
 - The Developer implements via `/af-implement-spec` or `/af-fix-bug`.
 - PM approves; PR is opened; SPEC moves to `.af/specs/archived/`.

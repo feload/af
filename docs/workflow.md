@@ -49,3 +49,15 @@ PM: approve PR → close card
 - Bugs: `BUG-####.md` (zero-padded, e.g. `BUG-0001.md`)
 - Active (in progress): `.af/specs/active/`
 - Archived (PR approved and merged): `.af/specs/archived/`
+
+## Session focus
+
+Each command does one phase of the workflow and stops. The agent does not auto-progress to the next phase — if the PM wants to move on, they start a new session with the next command.
+
+- `/af-create-card` creates one or more cards. It does not write SPECs.
+- `/af-create-spec` writes a SPEC. It does not implement.
+- `/af-create-bug` writes a BUG SPEC. It does not fix.
+- `/af-implement-spec` implements a `ready` SPEC. It does not pick up another SPEC.
+- `/af-fix-bug` fixes a `ready` BUG SPEC and writes a regression test. It does not pick up another BUG SPEC.
+
+Keep sessions focused on a single phase. This keeps scope and review boundaries crisp.

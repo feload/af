@@ -10,6 +10,7 @@ docs/workflow.md                 .af/docs/workflow.md
 docs/architecture.md             .af/docs/architecture.md
 docs/domain.md                   .af/docs/domain.md
 docs/conventions.md              .af/docs/conventions.md
+commands/af-create-card.md       .claude/commands/af-create-card.md
 commands/af-create-spec.md       .claude/commands/af-create-spec.md
 commands/af-create-bug.md        .claude/commands/af-create-bug.md
 commands/af-implement-spec.md    .claude/commands/af-implement-spec.md

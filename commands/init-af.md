@@ -1,3 +1,8 @@
+---
+model: sonnet
+effort: medium
+---
+
 # /init-af
 
 **Trigger:** PM runs this once in a repo. Bootstraps `.af/` if missing, then populates the project-context docs from the codebase.

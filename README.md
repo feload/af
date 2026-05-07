@@ -30,16 +30,24 @@ Bugs follow the same shape, with one extra rule: every fix ships with a regressi
 
 ## Install
 
-Run from the root of your project:
+af installs globally by default — once. Then `/init-af` bootstraps any repo:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh
 ```
 
+This places slash commands in `~/.claude/commands/` and caches framework files in `~/.af/<version>/`. To use af in a repo, `cd` into it, open [Claude Code](https://github.com/anthropics/claude-code), and run `/init-af`.
+
 To pin a specific version:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh -s -- v0.1.1
+curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh -s -- v0.3.0
+```
+
+For per-project install instead (slash commands and framework files all live inside the repo):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh -s -- --local
 ```
 
 For the security-conscious — review before running:
@@ -47,10 +55,8 @@ For the security-conscious — review before running:
 ```sh
 curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh -o af-install.sh
 less af-install.sh
-sh af-install.sh v0.1.1
+sh af-install.sh v0.3.0
 ```
-
-After install, open the project in [Claude Code](https://github.com/anthropics/claude-code) and run `/init-af` to populate the project-context docs from your codebase.
 
 ### Requirements
 
@@ -58,7 +64,24 @@ After install, open the project in [Claude Code](https://github.com/anthropics/c
 - `curl`
 - A Claude Code installation in the consuming environment
 
-### What gets created in your project
+### What gets created
+
+**Global install** (`install.sh`):
+
+```
+~/.claude/commands/         # /af-* and /init-af slash commands
+~/.af/
+├── current                 # text file — active version (e.g. "v0.3.0")
+└── <version>/
+    ├── VERSION
+    ├── MANIFEST
+    ├── agents/
+    ├── templates/
+    ├── docs/
+    └── bin/bootstrap-here.sh
+```
+
+**Per-repo bootstrap** (`/init-af`, or `install.sh --local`):
 
 ```
 <your project>/
@@ -70,7 +93,6 @@ After install, open the project in [Claude Code](https://github.com/anthropics/c
 │   └── specs/
 │       ├── active/
 │       └── archived/
-├── .claude/commands/       # slash commands — Claude Code reads them here
 ├── AGENTS.md               # only if you didn't already have one
 └── CLAUDE.md               # only if you didn't already have one
 ```
@@ -82,11 +104,12 @@ Existing files are never overwritten. If you already have `AGENTS.md` or `CLAUDE
 | Path | What lives there |
 |---|---|
 | [agents/](agents/) | Role prompts — `lead.md`, `developer.md` |
-| [commands/](commands/) | Slash command sources, installed to host's `.claude/commands/` |
+| [commands/](commands/) | Slash command sources, installed to `~/.claude/commands/` (global) or `.claude/commands/` (`--local`) |
 | [templates/](templates/) | `spec.md`, `bug.md` — the artifacts the Lead fills in |
 | [docs/](docs/) | `workflow.md` (the rules) + host-side placeholders (`architecture.md`, `domain.md`, `conventions.md`) populated in the host by `/init-af` |
+| [bin/bootstrap-here.sh](bin/bootstrap-here.sh) | POSIX helper that copies cached framework files into the current repo. Invoked by `/init-af` |
 | [MANIFEST](MANIFEST) | Maps source paths in this repo to target paths in a host project |
-| [install.sh](install.sh) | POSIX shell installer |
+| [install.sh](install.sh) | POSIX shell installer (global by default, `--local` for per-project) |
 | [AGENTS.md](AGENTS.md) | Guide for AI agents working on the framework itself |
 
 ## The flow in detail

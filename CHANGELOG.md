@@ -2,6 +2,16 @@
 
 All notable changes to the af framework are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## v0.3.0 — 2026-05-06
+
+### Added
+- Global install mode (now the default for `install.sh`): slash commands go to `~/.claude/commands/`, framework files cached in `~/.af/<version>/`, active version recorded in `~/.af/current`. One install, then `/init-af` works in any repo.
+- `bin/bootstrap-here.sh` — POSIX helper invoked by `/init-af` that copies cached framework files into the current repo's `.af/` and creates `AGENTS.md`/`CLAUDE.md` if missing.
+
+### Changed
+- `/init-af` now bootstraps `.af/` from the global cache when missing, then proceeds with its existing populate-docs behavior.
+- `install.sh --local` preserves the previous per-project install behavior for users who prefer project-scoped commands.
+
 ## v0.2.0 — 2026-05-06
 
 ### Changed

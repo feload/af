@@ -7,13 +7,14 @@ For the public-facing description, see [README.md](README.md).
 ## Repo layout
 
 - `agents/` — role prompts (`lead.md`, `developer.md`)
-- `commands/` — canonical source of slash commands. Installed into a host's `.claude/commands/`
+- `commands/` — canonical source of slash commands. Installed into `~/.claude/commands/` by default, or `.claude/commands/` under `--local`
 - `templates/` — SPEC and BUG SPEC templates
 - `docs/workflow.md` — the workflow rules
 - `docs/architecture.md`, `docs/domain.md`, `docs/conventions.md` — placeholder templates for host-side context, populated by `/init-af` in the host
+- `bin/bootstrap-here.sh` — POSIX helper that copies cached framework files from `~/.af/<version>/` into the current repo's `.af/`. Invoked by `/init-af`
 - `MANIFEST` — list of host-installable paths with target locations
-- `install.sh` — POSIX shell installer
-- `README.md`, `CHANGELOG.md`, `LICENSE`, `VERSION` — framework metadata, never installed
+- `install.sh` — POSIX shell installer (global default, `--local` per-project)
+- `README.md`, `CHANGELOG.md`, `LICENSE` — framework metadata, never installed
 
 ## Path conventions inside framework files
 
@@ -39,8 +40,9 @@ The slash commands in `commands/` are only usable in a *host project* where af i
 
 To verify an install before publishing a release:
 
-1. Create a release-candidate tag (e.g. `v0.1.1-rc1`) and push it.
-2. In a scratch directory, run `curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh -s -- v0.1.1-rc1`.
-3. Inspect the `.af/` and `.claude/commands/` output.
+1. Create a release-candidate tag (e.g. `v0.3.0-rc1`) and push it.
+2. **Global install:** in a scratch directory, run `curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh -s -- v0.3.0-rc1`. Inspect `~/.claude/commands/` and `~/.af/<version>/`.
+3. **Per-repo bootstrap:** `cd` into a different scratch repo, open Claude Code, run `/init-af`. Inspect `.af/` in that repo.
+4. **Local-mode regression:** in another scratch dir, run `... | sh -s -- --local v0.3.0-rc1`. Inspect `.af/` and `.claude/commands/` inside that dir.
 
 Once verified, push the real release tag and create a GitHub Release with the corresponding `CHANGELOG.md` notes.

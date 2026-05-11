@@ -1,7 +1,7 @@
 #!/bin/sh
 # af — update an already-initialized host's framework files to a target version.
 #
-# Usage (invoked by /update-af):
+# Usage (invoked by /af-update):
 #   sh ~/.af/<global>/bin/update-here.sh           # catches host up to ~/.af/current
 #   sh ~/.af/<global>/bin/update-here.sh v0.5.0    # catches host up to v0.5.0,
 #                                                  # fetching the version into
@@ -11,7 +11,7 @@
 # Bumps .af/VERSION to the target on success.
 #
 # Does NOT touch: .af/specs/, .af/docs/architecture.md, .af/docs/domain.md,
-# .af/docs/conventions.md, AGENTS.md, CLAUDE.md. The /update-af slash command
+# .af/docs/conventions.md, AGENTS.md, CLAUDE.md. The /af-update slash command
 # handles host-populated docs interactively after this script returns.
 
 set -eu
@@ -25,7 +25,7 @@ err() { printf "Error: %s\n" "$1" >&2; exit 1; }
 AF_HOME="${AF_HOME:-$HOME/.af}"
 CURRENT_FILE="${AF_HOME}/current"
 
-[ -f .af/VERSION ] || err "no .af/VERSION in $(pwd) — run /init-af first."
+[ -f .af/VERSION ] || err "no .af/VERSION in $(pwd) — run /af-init first."
 
 TARGET="${1:-}"
 if [ -z "$TARGET" ]; then
@@ -105,6 +105,6 @@ Three host-populated docs were NOT touched:
   .af/docs/domain.md
   .af/docs/conventions.md
 
-The /update-af slash command will diff each against ${TARGET}'s placeholder
+The /af-update slash command will diff each against ${TARGET}'s placeholder
 and ask whether to keep yours, take the new placeholder, or merge manually.
 EOF

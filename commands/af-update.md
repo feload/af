@@ -3,13 +3,13 @@ model: sonnet
 effort: medium
 ---
 
-# /update-af
+# /af-update
 
 **Trigger:** PM wants to bring an already-initialized repo's `.af/` up to a newer framework version.
 
 **Prerequisites:**
-- `.af/VERSION` exists (repo was initialized via `/init-af`).
-- af is installed globally and `~/.af/<global-version>/bin/update-here.sh` exists. If your global install predates `/update-af`, re-run `install.sh` first.
+- `.af/VERSION` exists (repo was initialized via `/af-init`).
+- af is installed globally and `~/.af/<global-version>/bin/update-here.sh` exists. If your global install predates `/af-update`, re-run `install.sh` first.
 
 **Arguments:** `$ARGUMENTS` — optional version tag (e.g. `v0.5.0`). If omitted, the target is whatever `~/.af/current` points to. If the version isn't already cached at `~/.af/<version>/`, the helper script fetches it from GitHub.
 
@@ -25,7 +25,7 @@ effort: medium
      - **Take new placeholder** (overwrite — destructive; only sensible if the host's version is still mostly placeholder text).
      - **Merge manually** (PM edits; you can show the new sections inline so they can paste).
 
-3. **Summarize.** Print: target version, framework files refreshed, per-doc PM choices. Remind the PM they can re-run `/init-af` later to repopulate host docs from the codebase.
+3. **Summarize.** Print: target version, framework files refreshed, per-doc PM choices.
 
 **Output:** Updated `.af/`, refreshed `.af/VERSION`, and a one-screen summary.
 

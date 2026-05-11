@@ -2,6 +2,15 @@
 
 All notable changes to the af framework are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## v0.7.0 — 2026-05-11
+
+### Changed (breaking)
+- Lifecycle commands renamed to align with the `af-*` prefix used by every other command: `/init-af` → `/af-init`, `/update-af` → `/af-update`. The old names are removed, not aliased. Users upgrading need to re-run `install.sh` to drop the new files into `~/.claude/commands/`; the old `init-af.md` and `update-af.md` files left behind in that directory by prior installs can be deleted manually.
+- `AGENTS.md` updated: a single `af-*` prefix now covers both workflow and lifecycle commands. The previous two-prefix convention (`af-*` for workflow, `*-af` for lifecycle) is retired.
+
+### Fixed
+- `/af-init` is now idempotent. If `.af/VERSION` already exists in the current directory, the command aborts immediately and points the PM at `/af-update`. The previous `/init-af` would silently re-explore the codebase and could overwrite host-populated `.af/docs/*` content on a second run.
+
 ## v0.6.0 — 2026-05-07
 
 ### Changed

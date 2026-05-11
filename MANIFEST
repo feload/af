@@ -15,7 +15,7 @@ commands/af-create-spec.md       .claude/commands/af-create-spec.md
 commands/af-create-bug.md        .claude/commands/af-create-bug.md
 commands/af-implement-spec.md    .claude/commands/af-implement-spec.md
 commands/af-fix-bug.md           .claude/commands/af-fix-bug.md
-commands/init-af.md              .claude/commands/init-af.md
-commands/update-af.md            .claude/commands/update-af.md
+commands/af-init.md              .claude/commands/af-init.md
+commands/af-update.md            .claude/commands/af-update.md
 bin/bootstrap-here.sh            .af/bin/bootstrap-here.sh
 bin/update-here.sh               .af/bin/update-here.sh

@@ -2,20 +2,20 @@
 # af — install the AI-assisted development framework.
 #
 # Default (global) install — slash commands at ~/.claude/commands/, framework
-# files cached at ~/.af/<version>/. Run /init-af in any repo to bootstrap it.
+# files cached at ~/.af/<version>/. Run /af-init in any repo to bootstrap it.
 #
 #   curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh
-#   curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh -s -- v0.3.0
+#   curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh -s -- v0.7.0
 #
 # Per-project install — drops everything into the current directory:
 #
 #   curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh -s -- --local
-#   curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh -s -- --local v0.3.0
+#   curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh -s -- --local v0.7.0
 #
 # Two-step (recommended for review):
 #   curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh -o af-install.sh
 #   less af-install.sh
-#   sh af-install.sh v0.3.0
+#   sh af-install.sh v0.7.0
 #
 # Existing files are never overwritten.
 
@@ -144,7 +144,7 @@ Done. af ${VERSION} installed globally.
 Next steps:
   1. cd into any repo.
   2. Open it in Claude Code.
-  3. Run /init-af to bootstrap .af/ and populate the project-context docs.
+  3. Run /af-init to bootstrap .af/ and populate the project-context docs.
 EOF
     exit 0
 fi
@@ -176,13 +176,13 @@ Full rules: `.af/docs/workflow.md`. Role definitions: `.af/agents/`.
 
 ## Project context
 
-Run `/init-af` in Claude Code to populate `.af/docs/architecture.md`,
+Run `/af-init` in Claude Code to populate `.af/docs/architecture.md`,
 `.af/docs/domain.md`, and `.af/docs/conventions.md` from the codebase.
 
 ## Updating
 
-Re-run `install.sh` to refresh the global cache, then `/update-af` in this
-repo to bring `.af/` to that version. `/update-af v0.X.0` targets a specific
+Re-run `install.sh` to refresh the global cache, then `/af-update` in this
+repo to bring `.af/` to that version. `/af-update v0.X.0` targets a specific
 version. Specs and host-populated docs are preserved.
 AGENTS_EOF
     printf "  write  AGENTS.md\n"
@@ -203,6 +203,6 @@ Done. af ${VERSION} installed into $(pwd).
 
 Next steps:
   1. Open this project in Claude Code.
-  2. Run /init-af to populate .af/docs/architecture.md, .af/docs/domain.md,
+  2. Run /af-init to populate .af/docs/architecture.md, .af/docs/domain.md,
      and .af/docs/conventions.md from your codebase.
 EOF

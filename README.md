@@ -32,18 +32,18 @@ Bugs follow the same shape, with one extra rule: every fix ships with a regressi
 
 ## Install
 
-af installs globally by default — once. Then `/init-af` bootstraps any repo:
+af installs globally by default — once. Then `/af-init` bootstraps any repo:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh
 ```
 
-This places slash commands in `~/.claude/commands/` and caches framework files in `~/.af/<version>/`. To use af in a repo, `cd` into it, open [Claude Code](https://github.com/anthropics/claude-code), and run `/init-af`.
+This places slash commands in `~/.claude/commands/` and caches framework files in `~/.af/<version>/`. To use af in a repo, `cd` into it, open [Claude Code](https://github.com/anthropics/claude-code), and run `/af-init`.
 
 To pin a specific version:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh -s -- v0.5.0
+curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh -s -- v0.7.0
 ```
 
 For per-project install instead (slash commands and framework files all live inside the repo):
@@ -57,12 +57,12 @@ For the security-conscious — review before running:
 ```sh
 curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh -o af-install.sh
 less af-install.sh
-sh af-install.sh v0.5.0
+sh af-install.sh v0.7.0
 ```
 
 ### Updating an existing repo
 
-When a new af version ships, re-run `install.sh` to refresh the global cache, then run `/update-af` inside any repo to bring its `.af/` up to that version. To target a specific version directly, pass it as an argument: `/update-af v0.5.0` (the helper fetches it from GitHub if not already cached). Updates overwrite framework files and bump `.af/VERSION`; they never touch `.af/specs/`. Host-populated docs (`architecture.md`, `domain.md`, `conventions.md`) are diffed against the new placeholder and you decide per file whether to keep, overwrite, or merge.
+When a new af version ships, re-run `install.sh` to refresh the global cache, then run `/af-update` inside any repo to bring its `.af/` up to that version. To target a specific version directly, pass it as an argument: `/af-update v0.7.0` (the helper fetches it from GitHub if not already cached). Updates overwrite framework files and bump `.af/VERSION`; they never touch `.af/specs/`. Host-populated docs (`architecture.md`, `domain.md`, `conventions.md`) are diffed against the new placeholder and you decide per file whether to keep, overwrite, or merge.
 
 ### Requirements
 
@@ -75,7 +75,7 @@ When a new af version ships, re-run `install.sh` to refresh the global cache, th
 **Global install** (`install.sh`):
 
 ```
-~/.claude/commands/         # /af-* workflow commands and /init-af, /update-af lifecycle commands
+~/.claude/commands/         # /af-* workflow + lifecycle commands
 ~/.af/
 ├── current                 # text file — active version (e.g. "v0.5.0")
 └── <version>/
@@ -89,7 +89,7 @@ When a new af version ships, re-run `install.sh` to refresh the global cache, th
         └── update-here.sh
 ```
 
-**Per-repo bootstrap** (`/init-af`, or `install.sh --local`):
+**Per-repo bootstrap** (`/af-init`, or `install.sh --local`):
 
 ```
 <your project>/
@@ -114,8 +114,8 @@ Existing files are never overwritten. If you already have `AGENTS.md` or `CLAUDE
 | [agents/](agents/) | Role prompts — `lead.md`, `developer.md` |
 | [commands/](commands/) | Slash command sources, installed to `~/.claude/commands/` (global) or `.claude/commands/` (`--local`) |
 | [templates/](templates/) | `spec.md`, `bug.md` — the artifacts the Lead fills in |
-| [docs/](docs/) | `workflow.md` (the rules) + host-side placeholders (`architecture.md`, `domain.md`, `conventions.md`) populated in the host by `/init-af` |
-| [bin/bootstrap-here.sh](bin/bootstrap-here.sh) | POSIX helper that copies cached framework files into the current repo. Invoked by `/init-af` |
+| [docs/](docs/) | `workflow.md` (the rules) + host-side placeholders (`architecture.md`, `domain.md`, `conventions.md`) populated in the host by `/af-init` |
+| [bin/bootstrap-here.sh](bin/bootstrap-here.sh) | POSIX helper that copies cached framework files into the current repo. Invoked by `/af-init` |
 | [MANIFEST](MANIFEST) | Maps source paths in this repo to target paths in a host project |
 | [install.sh](install.sh) | POSIX shell installer (global by default, `--local` for per-project) |
 | [AGENTS.md](AGENTS.md) | Guide for AI agents working on the framework itself |

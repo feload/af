@@ -7,12 +7,15 @@
 #                                                  # fetching the version into
 #                                                  # ~/.af/v0.5.0/ if not cached.
 #
-# Overwrites framework files only — agents/, templates/, docs/workflow.md, bin/.
+# Overwrites framework files only — agents/, templates/, docs/workflow.md,
+# docs/usm.md, docs/usm/index.html, docs/usm/styles.css, bin/.
 # Bumps .af/VERSION to the target on success.
 #
-# Does NOT touch: .af/specs/, .af/docs/architecture.md, .af/docs/domain.md,
-# .af/docs/conventions.md, AGENTS.md, CLAUDE.md. The /af-update slash command
-# handles host-populated docs interactively after this script returns.
+# Does NOT touch: .af/docs/usm/data.js, .af/docs/usm/specs.js,
+# .af/docs/usm/bugs.js (project-owned USM data), .af/docs/architecture.md,
+# .af/docs/domain.md, .af/docs/conventions.md, AGENTS.md, CLAUDE.md.
+# The /af-update slash command handles host-populated docs interactively
+# after this script returns.
 
 set -eu
 
@@ -89,6 +92,9 @@ overwrite "agents/developer.md"      ".af/agents/developer.md"
 overwrite "templates/spec.md"        ".af/templates/spec.md"
 overwrite "templates/bug.md"         ".af/templates/bug.md"
 overwrite "docs/workflow.md"         ".af/docs/workflow.md"
+overwrite "docs/usm.md"              ".af/docs/usm.md"
+overwrite "docs/usm/index.html"      ".af/docs/usm/index.html"
+overwrite "docs/usm/styles.css"      ".af/docs/usm/styles.css"
 overwrite "bin/bootstrap-here.sh"    ".af/bin/bootstrap-here.sh"
 overwrite "bin/update-here.sh"       ".af/bin/update-here.sh"
 chmod +x .af/bin/bootstrap-here.sh .af/bin/update-here.sh
@@ -100,11 +106,16 @@ cat <<EOF
 
 Framework files updated to ${TARGET}.
 
-Three host-populated docs were NOT touched:
+These host-populated files were NOT touched:
   .af/docs/architecture.md
   .af/docs/domain.md
   .af/docs/conventions.md
+  .af/docs/usm/data.js
+  .af/docs/usm/specs.js
+  .af/docs/usm/bugs.js
 
-The /af-update slash command will diff each against ${TARGET}'s placeholder
-and ask whether to keep yours, take the new placeholder, or merge manually.
+The /af-update slash command will diff the three docs against ${TARGET}'s
+placeholder and ask whether to keep yours, take the new placeholder, or
+merge manually. The USM data files (data.js, specs.js, bugs.js) are
+project-owned and never overwritten.
 EOF

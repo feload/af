@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fredo — User Story Map</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <div class="header-top">
+      <div class="header-text">
+        <h1>Fredo — User Story Map</h1>
+        <p>Actividades y pasos en la parte superior; bajo cada paso, las historias agrupadas por versión. Click en una historia para ver su detalle. Click en el chip de una versión para colapsarla. Ctrl + rueda del mouse para scroll horizontal.</p>
+        <div class="legend" aria-label="Leyenda de estatus">
+          <span class="legend-item"><span class="legend-swatch proposed"></span>propuesta</span>
+          <span class="legend-item"><span class="legend-swatch active"></span>en desarrollo</span>
+          <span class="legend-item"><span class="legend-swatch done"></span>lista</span>
+          <span class="legend-item"><span class="legend-swatch dropped"></span>descartada</span>
+        </div>
+        <div class="header-chips" aria-label="Indicadores">
+          <button type="button" class="header-chip bugs-chip" id="bugs-chip" aria-pressed="false" hidden>
+            <span aria-hidden="true">🐞</span>
+            <span class="chip-count" id="bugs-chip-count">0</span>
+            <span class="chip-label">bugs abiertos</span>
+          </button>
+          <button type="button" class="header-chip tray-chip" id="tray-chip" hidden>
+            <span aria-hidden="true">📋</span>
+            <span class="chip-count" id="tray-chip-count">0</span>
+            <span class="chip-label">sin asignar</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div id="usm-root"></div>
+  </main>
+
+  <aside id="detail-pane" class="detail-pane" aria-hidden="true" aria-labelledby="pane-title">
+    <button type="button" class="close-btn" id="pane-close" aria-label="Cerrar panel">×</button>
+    <div id="pane-content"></div>
+  </aside>
+
+  <!-- Modal genérico -->
+  <div id="modal-backdrop" class="modal-backdrop" aria-hidden="true">
+    <div class="modal" id="modal" role="dialog" aria-modal="true">
+      <div id="modal-content"></div>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="specs.js"></script>
+  <script src="bugs.js"></script>
+  <script>
+    (function () {
+      const data = window.USM_DATA;
+      const specs = window.USM_SPECS || [];
+      const bugs = window.USM_BUGS || [];
+      const root = document.getElementById('usm-root');
+
+      const STATUS_LABEL = {
+        proposed: 'propuesta',
+        active: 'en desarrollo',
+        done: 'lista',
+        dropped: 'descartada'
+      };
+      const BUG_STATUS_LABEL = {
+        open: 'abierto',
+        'in-progress': 'en curso',
+        fixed: 'corregido',
+        'wont-fix': 'no se corrige'
+      };
+      const SPEC_STATUS_LABEL = {
+        draft: 'borrador',
+        ready: 'listo',
+        approved: 'aprobado',
+        archived: 'archivado'
+      };
+
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, function (c) {
+          return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+        });
+      }
+
+      function slugify(str) {
+        return String(str).toLowerCase()
+          .replace(/\s+/g, '-')
+          .replace(/[^a-z0-9-]/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '');
+      }
+
+      // ===== Estado de cambios pendientes =====
+      // Persiste en localStorage para que sobreviva al refresh.
+      // En cada cambio se guarda; al cargar se reconcilia con data.js para
+      // descartar ítems que ya fueron aplicados.
+      const STORAGE_KEY = 'fredo_usm_pending_v2';
+      const pendingChanges = {
+        newSlice: null,
+        moves: {}
+      };
+
+      function savePendingChanges() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(pendingChanges));
+        } catch (e) { /* localStorage no disponible: lo ignoramos */ }
+      }
+
+      function loadPendingChanges() {
+        let raw = null;
+        try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) { return; }
+        if (!raw) return;
+        let parsed;
+        try { parsed = JSON.parse(raw); } catch (e) { return; }
+        if (!parsed || typeof parsed !== 'object') return;
+
+        if (parsed.newSlice && parsed.newSlice.id && parsed.newSlice.title) {
+          const exists = (data.slices || []).some(function (s) { return s.id === parsed.newSlice.id; });
+          if (!exists) pendingChanges.newSlice = parsed.newSlice;
+        }
+        if (parsed.moves && typeof parsed.moves === 'object') {
+          const clean = {};
+          Object.keys(parsed.moves).forEach(function (storyId) {
+            const target = parsed.moves[storyId];
+            const story = findStoryById(storyId);
+            if (!story) return;
+            if ((story.slice || null) === (target || null)) return;
+            clean[storyId] = target;
+          });
+          pendingChanges.moves = clean;
+        }
+        savePendingChanges();
+      }
+
+      function getEffectiveSlice(story) {
+        if (Object.prototype.hasOwnProperty.call(pendingChanges.moves, story.id)) {
+          return pendingChanges.moves[story.id];
+        }
+        return story.slice || null;
+      }
+
+      // Status del slice. Si el slice trae `status` explícito, ese manda.
+      // Si no, se infiere de las US asignadas: si hay alguna en `active`
+      // o `done`, → in-progress; si todas son `proposed` (o no hay), →
+      // planning. `released` siempre es manual (shippear es decisión humana).
+      const SLICE_STATUS_LABEL = {
+        planning: 'en planeación',
+        'in-progress': 'en desarrollo',
+        released: 'liberada'
+      };
+      const VALID_SLICE_STATUS = { planning: true, 'in-progress': true, released: true };
+
+      function getSliceStatus(sliceId) {
+        if (sliceId === '__backlog__') return null;
+        let slice = null;
+        if (pendingChanges.newSlice && pendingChanges.newSlice.id === sliceId) {
+          slice = pendingChanges.newSlice;
+        } else {
+          slice = (data.slices || []).find(function (s) { return s.id === sliceId; });
+        }
+        if (!slice) return 'planning';
+        if (slice.status && VALID_SLICE_STATUS[slice.status]) return slice.status;
+        // Inferir desde las US asignadas (considerando moves pendientes).
+        let hasActiveOrDone = false;
+        data.activities.forEach(function (act) {
+          (act.steps || []).forEach(function (step) {
+            (step.stories || []).forEach(function (story) {
+              if (getEffectiveSlice(story) !== sliceId) return;
+              if (story.status === 'active' || story.status === 'done') hasActiveOrDone = true;
+            });
+          });
+        });
+        return hasActiveOrDone ? 'in-progress' : 'planning';
+      }
+
+      function isReleasedBand(bandId) {
+        return getSliceStatus(bandId) === 'released';
+      }
+
+      function getEffectiveBands() {
+        const allSlices = (data.slices || []).slice();
+        if (pendingChanges.newSlice) allSlices.push(pendingChanges.newSlice);
+        const decorated = allSlices.map(function (s) {
+          const st = getSliceStatus(s.id);
+          return { id: s.id, title: s.title, status: st, released: st === 'released', isBacklog: false };
+        });
+        const upcoming = decorated.filter(function (b) { return !b.released; });
+        const releasedReversed = decorated.filter(function (b) { return b.released; }).reverse();
+        const bands = upcoming.concat(releasedReversed);
+        bands.push({ id: '__backlog__', title: 'Backlog', status: null, released: false, isBacklog: true });
+        return bands;
+      }
+
+      function countStoriesInBand(band) {
+        let n = 0;
+        data.activities.forEach(function (act) {
+          (act.steps || []).forEach(function (step) {
+            (step.stories || []).forEach(function (story) {
+              const eff = getEffectiveSlice(story);
+              if (band.isBacklog ? !eff : eff === band.id) n += 1;
+            });
+          });
+        });
+        return n;
+      }
+
+      // ===== Grid =====
+      const grid = document.createElement('div');
+      grid.className = 'usm-grid';
+      root.appendChild(grid);
+
+      // Bugs abiertos (open|in-progress) por id de historia. Recalculado
+      // en cada renderMap por si el JS de bugs cambia en caliente.
+      function openBugsByStory() {
+        const m = {};
+        bugs.forEach(function (b) {
+          if (!b.story) return;
+          if (b.status !== 'open' && b.status !== 'in-progress') return;
+          m[b.story] = (m[b.story] || 0) + 1;
+        });
+        return m;
+      }
+
+      function totalOpenBugs() {
+        return bugs.filter(function (b) {
+          return b.status === 'open' || b.status === 'in-progress';
+        }).length;
+      }
+
+      function trayItems() {
+        const drafts = specs.filter(function (s) { return s.status === 'draft'; });
+        const orphanBugs = bugs.filter(function (b) { return !b.story; });
+        return { drafts: drafts, orphanBugs: orphanBugs };
+      }
+
+      function updateHeaderChips() {
+        const openBugs = totalOpenBugs();
+        const bugsChip = document.getElementById('bugs-chip');
+        const bugsCount = document.getElementById('bugs-chip-count');
+        if (openBugs > 0) {
+          bugsCount.textContent = String(openBugs);
+          bugsChip.hidden = false;
+        } else {
+          bugsChip.hidden = true;
+          // Si el filtro estaba activo y ya no hay bugs, lo apago.
+          if (grid.classList.contains('filter-bugs-only')) {
+            grid.classList.remove('filter-bugs-only');
+            bugsChip.setAttribute('aria-pressed', 'false');
+          }
+        }
+        const tray = trayItems();
+        const trayTotal = tray.drafts.length + tray.orphanBugs.length;
+        const trayChip = document.getElementById('tray-chip');
+        const trayCount = document.getElementById('tray-chip-count');
+        if (trayTotal > 0) {
+          trayCount.textContent = String(trayTotal);
+          trayChip.hidden = false;
+        } else {
+          trayChip.hidden = true;
+        }
+      }
+
+      function renderMap() {
+        while (grid.firstChild) grid.removeChild(grid.firstChild);
+
+        const bugsByStory = openBugsByStory();
+
+        const activityRanges = [];
+        let totalCols = 0;
+        data.activities.forEach(function (act) {
+          const span = Math.max(1, act.steps.length);
+          activityRanges.push({ start: totalCols + 1, span: span });
+          totalCols += span;
+        });
+
+        grid.style.gridTemplateColumns = 'repeat(' + totalCols + ', 120px)';
+
+        // Fila 1: actividades
+        data.activities.forEach(function (act, i) {
+          const r = activityRanges[i];
+          const el = document.createElement('div');
+          el.className = 'cell activity';
+          el.style.gridRow = '1';
+          el.style.gridColumn = r.start + ' / span ' + r.span;
+          el.textContent = act.title;
+          grid.appendChild(el);
+        });
+
+        // Fila 2: pasos
+        let col = 1;
+        data.activities.forEach(function (act) {
+          if (act.steps.length === 0) {
+            const el = document.createElement('div');
+            el.className = 'cell step empty';
+            el.style.gridRow = '2';
+            el.style.gridColumn = String(col);
+            el.textContent = 'sin pasos aún';
+            grid.appendChild(el);
+            col += 1;
+          } else {
+            act.steps.forEach(function (step) {
+              const el = document.createElement('div');
+              el.className = 'cell step';
+              el.dataset.stepId = step.id;
+              el.style.gridRow = '2';
+              el.style.gridColumn = String(col);
+              el.textContent = step.title;
+              grid.appendChild(el);
+              col += 1;
+            });
+          }
+        });
+
+        // Overlays de columna (uno por paso real, abarca toda la altura)
+        let overlayCol = 1;
+        data.activities.forEach(function (act) {
+          if (act.steps.length === 0) {
+            overlayCol += 1;
+            return;
+          }
+          act.steps.forEach(function (step) {
+            const ov = document.createElement('div');
+            ov.className = 'col-overlay';
+            ov.dataset.stepId = step.id;
+            ov.style.gridColumn = String(overlayCol);
+            ov.style.gridRow = '1 / -1';
+            grid.appendChild(ov);
+            overlayCol += 1;
+          });
+        });
+
+        // Bandas
+        const bands = getEffectiveBands();
+        let nextRow = 3;
+
+        // Placeholder "+ Nuevo release" cuando no hay uno pendiente.
+        if (!pendingChanges.newSlice) {
+          const ph = document.createElement('div');
+          ph.className = 'slice-divider slice-divider-placeholder';
+          ph.style.gridRow = String(nextRow);
+          const phWrap = document.createElement('div');
+          phWrap.className = 'slice-divider-actions';
+          const phBtn = document.createElement('button');
+          phBtn.type = 'button';
+          phBtn.className = 'slice-divider-label';
+          phBtn.textContent = '+ Nuevo release';
+          phBtn.addEventListener('click', openNewReleaseModal);
+          phWrap.appendChild(phBtn);
+          ph.appendChild(phWrap);
+          grid.appendChild(ph);
+          nextRow += 1;
+        }
+
+        bands.forEach(function (band) {
+          // Divisor + chip + acciones inline (sólo en el release pendiente)
+          const divider = document.createElement('div');
+          let dividerCls = 'slice-divider';
+          if (band.released) dividerCls += ' released';
+          if (band.status) dividerCls += ' status-' + band.status;
+          if (band.isBacklog) dividerCls += ' backlog';
+          divider.className = dividerCls;
+          divider.dataset.bandId = band.id;
+          divider.dataset.collapsed = 'false';
+          divider.style.gridRow = String(nextRow);
+
+          const wrap = document.createElement('div');
+          wrap.className = 'slice-divider-actions';
+
+          const label = document.createElement('button');
+          label.type = 'button';
+          label.className = 'slice-divider-label';
+          label.setAttribute('aria-expanded', 'true');
+
+          const labelText = document.createElement('span');
+          if (band.isBacklog) {
+            labelText.textContent = 'Backlog';
+          } else {
+            const statusSuffix = band.status ? ' · ' + (SLICE_STATUS_LABEL[band.status] || band.status) : '';
+            labelText.textContent = 'Versión ' + band.title + statusSuffix;
+          }
+          label.appendChild(labelText);
+
+          const cnt = document.createElement('span');
+          cnt.className = 'slice-count';
+          cnt.textContent = String(countStoriesInBand(band));
+          label.appendChild(cnt);
+
+          (function (bandId) {
+            function toggleBand() {
+              const isCollapsed = divider.dataset.collapsed === 'true';
+              const nxt = !isCollapsed;
+              divider.dataset.collapsed = String(nxt);
+              label.setAttribute('aria-expanded', String(!nxt));
+              grid.querySelectorAll('.story-cell[data-band-id="' + bandId + '"]').forEach(function (cell) {
+                cell.style.display = nxt ? 'none' : '';
+              });
+            }
+            label.addEventListener('click', function (e) {
+              e.stopPropagation();
+              toggleBand();
+            });
+          })(band.id);
+
+          wrap.appendChild(label);
+
+          // Acciones inline para el release pendiente
+          const isPendingBand = pendingChanges.newSlice && pendingChanges.newSlice.id === band.id;
+          if (isPendingBand) {
+            const generateBtn = document.createElement('button');
+            generateBtn.type = 'button';
+            generateBtn.className = 'slice-action primary';
+            generateBtn.textContent = 'Generar instrucción';
+            generateBtn.addEventListener('click', openInstructionModal);
+            wrap.appendChild(generateBtn);
+
+            const cancelBtn = document.createElement('button');
+            cancelBtn.type = 'button';
+            cancelBtn.className = 'slice-action danger';
+            cancelBtn.textContent = 'Cancelar';
+            cancelBtn.addEventListener('click', openCancelConfirmModal);
+            wrap.appendChild(cancelBtn);
+          }
+
+          divider.appendChild(wrap);
+          grid.appendChild(divider);
+          nextRow += 1;
+
+          // Fila de historias
+          const storiesRow = nextRow;
+          let c = 1;
+          data.activities.forEach(function (act) {
+            if (act.steps.length === 0) {
+              c += 1;
+              return;
+            }
+            act.steps.forEach(function (step) {
+              const matching = step.stories.filter(function (s) {
+                const eff = getEffectiveSlice(s);
+                return band.isBacklog ? !eff : eff === band.id;
+              });
+
+              const cell = document.createElement('div');
+              cell.className = 'story-cell';
+              cell.dataset.bandId = band.id;
+              cell.dataset.bandReleased = band.released ? 'true' : 'false';
+              cell.dataset.stepId = step.id;
+              cell.style.gridRow = String(storiesRow);
+              cell.style.gridColumn = String(c);
+
+              if (!band.released) {
+                cell.addEventListener('dragover', handleDragOver);
+                cell.addEventListener('dragleave', handleDragLeave);
+                cell.addEventListener('drop', handleDrop);
+              }
+
+              matching.forEach(function (story) {
+                const isLinkable = !!story.id;
+                const tag = isLinkable ? 'a' : 'div';
+                const el = document.createElement(tag);
+                const bugCount = bugsByStory[story.id] || 0;
+                let storyCls = 'story status-' + (story.status || 'proposed');
+                if (band.released) storyCls += ' released';
+                else storyCls += ' draggable';
+                if (Object.prototype.hasOwnProperty.call(pendingChanges.moves, story.id)) {
+                  storyCls += ' moved';
+                }
+                if (bugCount > 0) storyCls += ' has-open-bugs';
+                el.className = storyCls;
+
+                if (!band.released) {
+                  el.draggable = true;
+                  el.addEventListener('dragstart', function (e) {
+                    e.dataTransfer.setData('text/plain', story.id);
+                    e.dataTransfer.effectAllowed = 'move';
+                    el.classList.add('dragging');
+                    document.body.classList.add('dragging-story');
+                  });
+                  el.addEventListener('dragend', function () {
+                    el.classList.remove('dragging');
+                    document.body.classList.remove('dragging-story');
+                  });
+                }
+
+                if (isLinkable) {
+                  el.href = '#' + encodeURIComponent(story.id);
+                  el.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    openStoryPane(story, step, act);
+                  });
+                }
+                if (story.id) {
+                  el.dataset.storyId = story.id;
+                  const idEl = document.createElement('span');
+                  idEl.className = 'us-id';
+                  idEl.textContent = story.id;
+                  el.appendChild(idEl);
+                }
+                const titleEl = document.createElement('span');
+                titleEl.className = 'us-title';
+                titleEl.textContent = story.title;
+                el.appendChild(titleEl);
+                if (bugCount > 0) {
+                  const bugBadge = document.createElement('span');
+                  bugBadge.className = 'us-bugs';
+                  bugBadge.title = bugCount + ' bug' + (bugCount === 1 ? '' : 's') + ' abierto' + (bugCount === 1 ? '' : 's');
+                  bugBadge.textContent = '🐞 ' + bugCount;
+                  el.appendChild(bugBadge);
+                }
+                cell.appendChild(el);
+              });
+
+              grid.appendChild(cell);
+              c += 1;
+            });
+          });
+          nextRow += 1;
+        });
+
+        updateHeaderChips();
+
+        // Doble tick para asegurar que el layout esté listo antes de medir.
+        requestAnimationFrame(function () {
+          updateRowHeights();
+          requestAnimationFrame(updateRowHeights);
+        });
+        currentStepId = null;
+
+        // Si el panel está abierto, re-marcar la historia seleccionada
+        // (el re-render borra la clase .selected).
+        if (pane && pane.classList.contains('open')) {
+          const currentId = decodeURIComponent(location.hash.replace(/^#/, ''));
+          if (currentId) markStorySelected(currentId);
+        }
+      }
+
+      function updateRowHeights() {
+        const firstActivity = grid.querySelector('.cell.activity');
+        if (!firstActivity) return;
+        const h = firstActivity.offsetHeight;
+        if (h <= 0) return;
+        grid.style.setProperty('--row1-height', h + 'px');
+        // También lo aplico directo a cada paso, sin depender de la variable.
+        grid.querySelectorAll('.cell.step').forEach(function (el) {
+          el.style.top = h + 'px';
+        });
+      }
+      window.addEventListener('resize', updateRowHeights);
+
+      // ===== Hover de columna =====
+      let currentStepId = null;
+      function clearColumnHover() {
+        if (!currentStepId) return;
+        grid.querySelectorAll('[data-step-id="' + currentStepId + '"]').forEach(function (el) {
+          el.classList.remove('col-hover');
+        });
+        currentStepId = null;
+      }
+      grid.addEventListener('mousemove', function (e) {
+        const target = e.target.closest('[data-step-id]');
+        const stepId = target ? target.dataset.stepId : null;
+        if (stepId === currentStepId) return;
+        clearColumnHover();
+        if (stepId) {
+          grid.querySelectorAll('[data-step-id="' + stepId + '"]').forEach(function (el) {
+            el.classList.add('col-hover');
+          });
+          currentStepId = stepId;
+        }
+      });
+      grid.addEventListener('mouseleave', clearColumnHover);
+
+      // ===== Drag & drop =====
+      function handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        e.currentTarget.classList.add('drop-target-active');
+      }
+      function handleDragLeave(e) {
+        e.currentTarget.classList.remove('drop-target-active');
+      }
+      function handleDrop(e) {
+        e.preventDefault();
+        e.currentTarget.classList.remove('drop-target-active');
+        document.body.classList.remove('dragging-story');
+        const storyId = e.dataTransfer.getData('text/plain');
+        if (!storyId) return;
+        const bandId = e.currentTarget.dataset.bandId;
+        const targetSlice = bandId === '__backlog__' ? null : bandId;
+
+        // Verifica que el cambio no sea redundante (drop en la banda de origen)
+        const story = findStoryById(storyId);
+        if (story && getEffectiveSlice(story) === targetSlice) return;
+
+        pendingChanges.moves[storyId] = targetSlice;
+        savePendingChanges();
+        renderMap();
+      }
+
+      function findStoryById(id) {
+        for (const act of data.activities) {
+          for (const step of act.steps || []) {
+            for (const story of step.stories || []) {
+              if (story.id === id) return story;
+            }
+          }
+        }
+        return null;
+      }
+
+      // ===== Panel lateral =====
+      const pane = document.getElementById('detail-pane');
+      const paneContent = document.getElementById('pane-content');
+      const paneClose = document.getElementById('pane-close');
+
+      function findSlice(sliceId) {
+        if (pendingChanges.newSlice && pendingChanges.newSlice.id === sliceId) return pendingChanges.newSlice;
+        return (data.slices || []).find(function (s) { return s.id === sliceId; });
+      }
+
+      function clearSelectedStory() {
+        grid.querySelectorAll('.story.selected').forEach(function (el) {
+          el.classList.remove('selected');
+        });
+      }
+
+      function markStorySelected(storyId) {
+        clearSelectedStory();
+        if (!storyId) return null;
+        const el = grid.querySelector('.story[data-story-id="' + storyId + '"]');
+        if (el) el.classList.add('selected');
+        return el;
+      }
+
+      function scrollToCenterStory(storyEl) {
+        if (!storyEl) return;
+        const main = document.querySelector('main');
+        const rect = storyEl.getBoundingClientRect();
+        const viewport = window.innerWidth;
+        // Ancho lógico del panel cuando está abierto (coincide con el CSS).
+        const paneWidth = Math.max(360, viewport * 0.5);
+        const visibleWidth = viewport - paneWidth;
+        const visibleCenter = visibleWidth / 2;
+        const storyCenter = (rect.left + rect.right) / 2;
+        const delta = storyCenter - visibleCenter;
+        if (Math.abs(delta) > 20) {
+          main.scrollBy({ left: delta, behavior: 'smooth' });
+        }
+      }
+
+      // ===== Render de SPEC y BUG en el panel =====
+      // Cada item se muestra como una tarjeta colapsable con todas las
+      // secciones de la plantilla. Por defecto va abierto si el item
+      // está activo (ready/approved para SPEC; open/in-progress para BUG)
+      // y cerrado si ya está terminado (archived/fixed/wont-fix), para
+      // mantener el panel manejable cuando se acumulan.
+
+      function renderSubtaskList(items) {
+        if (!Array.isArray(items) || items.length === 0) return '';
+        let html = '<ul class="pane-subtasks">';
+        items.forEach(function (t) {
+          const done = !!t.done;
+          html += '<li class="' + (done ? 'done' : 'pending') + '">' +
+                    '<span class="subtask-check" aria-hidden="true">' + (done ? '✓' : '☐') + '</span>' +
+                    '<span class="subtask-desc">' + escapeHtml(t.description || '') + '</span>' +
+                  '</li>';
+        });
+        html += '</ul>';
+        return html;
+      }
+
+      function renderTextSection(label, value) {
+        if (!value || !String(value).trim()) return '';
+        return '<div class="card-section"><h4>' + escapeHtml(label) + '</h4><p>' +
+               escapeHtml(value) + '</p></div>';
+      }
+
+      function renderListSection(label, items) {
+        if (!Array.isArray(items) || items.length === 0) return '';
+        let html = '<div class="card-section"><h4>' + escapeHtml(label) + '</h4><ol>';
+        items.forEach(function (s) { html += '<li>' + escapeHtml(s) + '</li>'; });
+        html += '</ol></div>';
+        return html;
+      }
+
+      function renderSpec(spec) {
+        const st = spec.status || 'draft';
+        const stLabel = SPEC_STATUS_LABEL[st] || st;
+        const openByDefault = (st === 'ready' || st === 'approved');
+        let html = '<details class="pane-card spec-card status-' + st + '"' +
+                   (openByDefault ? ' open' : '') + '>';
+        html +=   '<summary>';
+        html +=     '<span class="card-id">' + escapeHtml(spec.id || '(sin ID)') + '</span>';
+        html +=     '<span class="card-title">' + escapeHtml(spec.title || '') + '</span>';
+        html +=     '<span class="card-status spec-' + st + '">' + escapeHtml(stLabel) + '</span>';
+        html +=   '</summary>';
+        html += renderTextSection('Contexto', spec.context);
+        html += renderTextSection('Problema', spec.problem);
+        html += renderTextSection('Restricciones', spec.constraints);
+        if (Array.isArray(spec.subtasks) && spec.subtasks.length > 0) {
+          html += '<div class="card-section"><h4>Subtareas</h4>' +
+                  renderSubtaskList(spec.subtasks) + '</div>';
+        }
+        html += renderTextSection('Edge cases', spec.edgeCases);
+        html += renderTextSection('Done criteria', spec.doneCriteria);
+        html += '</details>';
+        return html;
+      }
+
+      function renderBug(bug) {
+        const st = bug.status || 'open';
+        const stLabel = BUG_STATUS_LABEL[st] || st;
+        const openByDefault = (st === 'open' || st === 'in-progress');
+        let html = '<details class="pane-card bug-card status-' + st + '"' +
+                   (openByDefault ? ' open' : '') + '>';
+        html +=   '<summary>';
+        html +=     '<span class="card-id">' + escapeHtml(bug.id || '(sin ID)') + '</span>';
+        html +=     '<span class="card-title">' + escapeHtml(bug.title || '') + '</span>';
+        html +=     '<span class="card-status bug-' + st + '">' + escapeHtml(stLabel) + '</span>';
+        html +=   '</summary>';
+        if (bug.foundAt) {
+          html += '<div class="card-meta">' + escapeHtml('Encontrado: ' + bug.foundAt) + '</div>';
+        }
+        html += renderTextSection('Descripción', bug.description);
+        html += renderListSection('Pasos para reproducir', bug.stepsToReproduce);
+        html += renderTextSection('Resultado esperado', bug.expected);
+        html += renderTextSection('Resultado actual', bug.actual);
+        html += renderTextSection('Área afectada', bug.affectedArea);
+        html += renderTextSection('Causa raíz', bug.rootCause);
+        if (Array.isArray(bug.fix) && bug.fix.length > 0) {
+          html += '<div class="card-section"><h4>Fix</h4>' +
+                  renderSubtaskList(bug.fix) + '</div>';
+        }
+        html += renderTextSection('Prueba de regresión', bug.regressionTest);
+        html += renderTextSection('Done criteria', bug.doneCriteria);
+        html += '</details>';
+        return html;
+      }
+
+      function openStoryPane(story, step, activity) {
+        const statusKey = story.status || 'proposed';
+        const statusLabel = STATUS_LABEL[statusKey] || statusKey;
+        const effSlice = getEffectiveSlice(story);
+
+        let html = '';
+        html +=
+          '<div class="pane-breadcrumb">' +
+            escapeHtml(activity.title) + ' › ' + escapeHtml(step.title) +
+          '</div>';
+        if (story.id) html += '<div class="pane-us-id">' + escapeHtml(story.id) + '</div>';
+
+        html +=
+          '<h2 class="pane-title" id="pane-title">' +
+            escapeHtml(story.title) +
+            '<span class="status-badge ' + statusKey + '">' + escapeHtml(statusLabel) + '</span>' +
+          '</h2>';
+
+        if (effSlice) {
+          const sl = findSlice(effSlice);
+          if (sl) {
+            const sliceStatus = getSliceStatus(sl.id);
+            const cls = 'pane-version status-' + (sliceStatus || 'planning') +
+                        (sliceStatus === 'released' ? ' released' : '');
+            const suffix = sliceStatus ? ' · ' + (SLICE_STATUS_LABEL[sliceStatus] || sliceStatus) : '';
+            html += '<div class="' + cls + '">' + escapeHtml(sl.title) + escapeHtml(suffix) + '</div>';
+          }
+        } else {
+          html += '<div class="pane-version backlog">Backlog</div>';
+        }
+
+        if (story.rationale && story.rationale.trim()) {
+          html += '<div class="pane-section"><h3>¿Por qué importa?</h3><p>' + escapeHtml(story.rationale) + '</p></div>';
+        }
+
+        html += '<div class="pane-section"><h3>Narrativa</h3>';
+        if (story.description && story.description.trim()) {
+          html += '<p>' + escapeHtml(story.description) + '</p>';
+        } else {
+          html += '<p class="placeholder">Pendiente de capturar.</p>';
+        }
+        html += '</div>';
+
+        if (Array.isArray(story.acceptance) && story.acceptance.length > 0) {
+          html += '<div class="pane-section"><h3>Criterios de aceptación</h3><ul>';
+          story.acceptance.forEach(function (c) {
+            html += '<li>' + escapeHtml(c) + '</li>';
+          });
+          html += '</ul></div>';
+        }
+
+        if (Array.isArray(story.tasks) && story.tasks.length > 0) {
+          html += '<div class="pane-section"><h3>Tareas</h3><ul class="pane-tasks">';
+          story.tasks.forEach(function (t) {
+            const ts = t.status || 'done';
+            const tsLabel = STATUS_LABEL[ts] || ts;
+            html += '<li>';
+            html +=   '<span class="task-status ' + ts + '">' + escapeHtml(tsLabel) + '</span>';
+            html +=   '<span>' + escapeHtml(t.title) + '</span>';
+            html += '</li>';
+          });
+          html += '</ul></div>';
+        }
+
+        const relatedSpecs = specs.filter(function (s) { return s.story === story.id; });
+        if (relatedSpecs.length > 0) {
+          html += '<div class="pane-section"><h3>SPECs relacionados</h3>';
+          relatedSpecs.forEach(function (s) { html += renderSpec(s); });
+          html += '</div>';
+        }
+
+        const relatedBugs = bugs.filter(function (b) { return b.story === story.id; });
+        if (relatedBugs.length > 0) {
+          html += '<div class="pane-section"><h3>Bugs relacionados</h3>';
+          relatedBugs.forEach(function (b) { html += renderBug(b); });
+          html += '</div>';
+        }
+
+        paneContent.innerHTML = html;
+        pane.classList.add('open');
+        pane.setAttribute('aria-hidden', 'false');
+        if (story.id) {
+          history.replaceState(null, '', '#' + encodeURIComponent(story.id));
+        }
+        const selectedEl = markStorySelected(story.id);
+        scrollToCenterStory(selectedEl);
+        paneClose.focus();
+      }
+
+      function closePane() {
+        pane.classList.remove('open');
+        pane.setAttribute('aria-hidden', 'true');
+        clearSelectedStory();
+        if (location.hash) {
+          history.replaceState(null, '', location.pathname + location.search);
+        }
+      }
+
+      paneClose.addEventListener('click', closePane);
+      document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Escape') return;
+        if (document.getElementById('modal-backdrop').getAttribute('aria-hidden') === 'false') {
+          closeModal();
+        } else if (pane.classList.contains('open')) {
+          closePane();
+        }
+      });
+
+      // Click fuera del panel lo cierra (excepto si fue sobre una historia,
+      // que refresca el contenido; o sobre el panel mismo).
+      document.addEventListener('click', function (e) {
+        if (!pane.classList.contains('open')) return;
+        if (e.target.closest('#detail-pane')) return;
+        if (e.target.closest('.story')) return;
+        if (e.target.closest('#modal-backdrop')) return;
+        closePane();
+      });
+
+      // ===== Modal genérico =====
+      function openModal(html) {
+        document.getElementById('modal-content').innerHTML = html;
+        document.getElementById('modal-backdrop').setAttribute('aria-hidden', 'false');
+      }
+      function closeModal() {
+        document.getElementById('modal-backdrop').setAttribute('aria-hidden', 'true');
+        document.getElementById('modal-content').innerHTML = '';
+      }
+      document.getElementById('modal-backdrop').addEventListener('click', function (e) {
+        if (e.target === e.currentTarget) closeModal();
+      });
+
+      // ===== Modales: Nuevo release / Instrucción / Cancelar =====
+      function openNewReleaseModal() {
+        openModal(
+          '<h2>Nuevo release</h2>' +
+          '<p>Dale un nombre a la versión que vas a armar. Aparece como banda nueva arriba de las versiones liberadas y puedes empezar a arrastrar historias del Backlog hacia ella.</p>' +
+          '<div>' +
+            '<label for="release-title">Nombre del release</label>' +
+            '<input type="text" id="release-title" placeholder="ej. v1.0" autocomplete="off">' +
+          '</div>' +
+          '<div class="modal-actions">' +
+            '<button type="button" class="btn-secondary" id="modal-cancel">Cancelar</button>' +
+            '<button type="button" class="btn-primary" id="modal-create">Crear</button>' +
+          '</div>'
+        );
+        const input = document.getElementById('release-title');
+        input.focus();
+        function submit() {
+          const title = input.value.trim();
+          if (!title) return;
+          const id = slugify(title) || ('release-' + Date.now());
+          pendingChanges.newSlice = { id: id, title: title, status: 'planning' };
+          savePendingChanges();
+          closeModal();
+          renderMap();
+        }
+        document.getElementById('modal-cancel').addEventListener('click', closeModal);
+        document.getElementById('modal-create').addEventListener('click', submit);
+        input.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            submit();
+          }
+        });
+      }
+
+      function openInstructionModal() {
+        const instruction = {};
+        if (pendingChanges.newSlice) instruction.newSlice = pendingChanges.newSlice;
+        const moves = Object.keys(pendingChanges.moves).map(function (sid) {
+          return { story: sid, toSlice: pendingChanges.moves[sid] };
+        });
+        if (moves.length > 0) instruction.moves = moves;
+
+        const text =
+          'Aplicar al USM:\n\n' +
+          '```json\n' +
+          JSON.stringify(instruction, null, 2) + '\n' +
+          '```';
+
+        openModal(
+          '<h2>Instrucción para Lead</h2>' +
+          '<p>Copia este bloque y pégalo en el chat para que Claude lo aplique a <code>data.js</code>.</p>' +
+          '<textarea id="instruction-text" readonly></textarea>' +
+          '<div class="modal-actions">' +
+            '<button type="button" class="btn-secondary" id="modal-close-btn">Cerrar</button>' +
+            '<button type="button" class="btn-primary" id="modal-copy-btn">Copiar al portapapeles</button>' +
+          '</div>'
+        );
+        const ta = document.getElementById('instruction-text');
+        ta.value = text;
+        ta.select();
+        document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+        document.getElementById('modal-copy-btn').addEventListener('click', function () {
+          ta.select();
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(ta.value).then(function () {
+              const btn = document.getElementById('modal-copy-btn');
+              btn.textContent = '✓ Copiado';
+              setTimeout(function () { btn.textContent = 'Copiar al portapapeles'; }, 1500);
+            });
+          } else {
+            document.execCommand('copy');
+          }
+        });
+      }
+
+      function openCancelConfirmModal() {
+        const moveCount = Object.keys(pendingChanges.moves).length;
+        const hasNew = !!pendingChanges.newSlice;
+        const pieces = [];
+        if (hasNew) pieces.push('el release nuevo');
+        if (moveCount > 0) pieces.push(moveCount + ' historia' + (moveCount === 1 ? '' : 's') + ' movida' + (moveCount === 1 ? '' : 's'));
+        const lostStr = pieces.length > 0 ? pieces.join(' y ') : 'los cambios pendientes';
+
+        openModal(
+          '<h2>Descartar cambios pendientes</h2>' +
+          '<p>Vas a perder ' + lostStr + '. Esta acción no se puede deshacer. ¿Continuamos?</p>' +
+          '<div class="modal-actions">' +
+            '<button type="button" class="btn-secondary" id="cancel-no">No, mantener</button>' +
+            '<button type="button" class="btn-primary" id="cancel-yes">Sí, descartar</button>' +
+          '</div>'
+        );
+        document.getElementById('cancel-no').addEventListener('click', closeModal);
+        document.getElementById('cancel-yes').addEventListener('click', function () {
+          pendingChanges.newSlice = null;
+          pendingChanges.moves = {};
+          try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+          closeModal();
+          renderMap();
+        });
+      }
+
+      // ===== Hash directo a una historia al cargar =====
+      function openFromHashIfMatch() {
+        const id = decodeURIComponent(location.hash.replace(/^#/, ''));
+        if (!id) return;
+        for (const act of data.activities) {
+          for (const step of act.steps || []) {
+            for (const story of step.stories || []) {
+              if (story.id === id) {
+                openStoryPane(story, step, act);
+                return;
+              }
+            }
+          }
+        }
+      }
+
+      // ===== Drag-to-scroll horizontal =====
+      (function initDragScroll() {
+        const container = document.querySelector('main');
+        const DRAG_THRESHOLD = 5;
+        let isDown = false;
+        let hasDragged = false;
+        let startX = 0;
+        let startScrollLeft = 0;
+
+        container.addEventListener('mousedown', function (e) {
+          if (e.target.closest('a, button, [role="button"], #detail-pane, .story.draggable')) return;
+          isDown = true;
+          hasDragged = false;
+          startX = e.pageX;
+          startScrollLeft = container.scrollLeft;
+        });
+        window.addEventListener('mousemove', function (e) {
+          if (!isDown) return;
+          const dx = e.pageX - startX;
+          if (!hasDragged && Math.abs(dx) > DRAG_THRESHOLD) {
+            hasDragged = true;
+            container.classList.add('dragging');
+          }
+          if (hasDragged) container.scrollLeft = startScrollLeft - dx;
+        });
+        window.addEventListener('mouseup', function () {
+          if (isDown) {
+            isDown = false;
+            container.classList.remove('dragging');
+          }
+        });
+        container.addEventListener('click', function (e) {
+          if (hasDragged) {
+            e.preventDefault();
+            e.stopPropagation();
+            hasDragged = false;
+          }
+        }, true);
+
+        // Ctrl + rueda del mouse = scroll horizontal
+        container.addEventListener('wheel', function (e) {
+          if (e.ctrlKey) {
+            e.preventDefault();
+            container.scrollLeft += e.deltaY;
+          }
+        }, { passive: false });
+      })();
+
+      // ===== Chips del header: filtro de bugs y bandeja =====
+      document.getElementById('bugs-chip').addEventListener('click', function () {
+        const active = grid.classList.toggle('filter-bugs-only');
+        this.setAttribute('aria-pressed', String(active));
+      });
+      document.getElementById('tray-chip').addEventListener('click', openTrayPane);
+
+      function openTrayPane() {
+        const tray = trayItems();
+        let html = '';
+        html += '<div class="pane-breadcrumb">Bandeja</div>';
+        html += '<h2 class="pane-title" id="pane-title">Sin asignar</h2>';
+
+        if (tray.drafts.length > 0) {
+          html += '<div class="pane-section"><h3>Borradores de SPEC</h3>';
+          tray.drafts.forEach(function (s) { html += renderSpec(s); });
+          html += '</div>';
+        }
+        if (tray.orphanBugs.length > 0) {
+          html += '<div class="pane-section"><h3>Bugs sin historia</h3>';
+          tray.orphanBugs.forEach(function (b) { html += renderBug(b); });
+          html += '</div>';
+        }
+        if (tray.drafts.length === 0 && tray.orphanBugs.length === 0) {
+          html += '<p class="placeholder">Nada en bandeja.</p>';
+        }
+
+        paneContent.innerHTML = html;
+        pane.classList.add('open');
+        pane.setAttribute('aria-hidden', 'false');
+        clearSelectedStory();
+        history.replaceState(null, '', '#tray');
+        paneClose.focus();
+      }
+
+      // ===== Render inicial =====
+      loadPendingChanges();
+      renderMap();
+      if (location.hash === '#tray') openTrayPane();
+      else openFromHashIfMatch();
+    })();
+  </script>
+</body>
+</html>

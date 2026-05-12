@@ -10,7 +10,11 @@ docs/workflow.md                 .af/docs/workflow.md
 docs/architecture.md             .af/docs/architecture.md
 docs/domain.md                   .af/docs/domain.md
 docs/conventions.md              .af/docs/conventions.md
-commands/af-create-card.md       .claude/commands/af-create-card.md
+docs/usm.md                      .af/docs/usm.md
+docs/usm/index.html              .af/docs/usm/index.html
+docs/usm/styles.css              .af/docs/usm/styles.css
+commands/af-create-backbone.md   .claude/commands/af-create-backbone.md
+commands/af-create-story.md      .claude/commands/af-create-story.md
 commands/af-create-spec.md       .claude/commands/af-create-spec.md
 commands/af-create-bug.md        .claude/commands/af-create-bug.md
 commands/af-implement-spec.md    .claude/commands/af-implement-spec.md

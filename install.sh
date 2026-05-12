@@ -149,11 +149,7 @@ EOF
     exit 0
 fi
 
-# --- Local-mode-only finalization (per-project AGENTS.md/CLAUDE.md/specs dirs) ---
-
-mkdir -p .af/specs/active .af/specs/archived
-[ -f .af/specs/active/.gitkeep ] || touch .af/specs/active/.gitkeep
-[ -f .af/specs/archived/.gitkeep ] || touch .af/specs/archived/.gitkeep
+# --- Local-mode-only finalization (per-project AGENTS.md/CLAUDE.md) ---
 
 printf "%s\n" "$VERSION" > .af/VERSION
 printf "  write  .af/VERSION\n"
@@ -166,11 +162,17 @@ This project uses the **af** AI-assisted development framework.
 
 ## Workflow
 
-- The PM (you) optionally drafts and creates cards via `/af-create-card`.
-- The PM hands work to the Lead via `/af-create-spec` or `/af-create-bug`.
-- The Lead writes a SPEC into `.af/specs/active/`. PM confirms.
-- The Developer implements via `/af-implement-spec` or `/af-fix-bug`.
-- PM approves; PR is opened; SPEC moves to `.af/specs/archived/`.
+- The PM (you) shapes the USM backbone via `/af-create-backbone`
+  (Activities + Steps under `.af/docs/usm/data.js`) and files stories
+  under those Steps via `/af-create-story`.
+- The PM hands a story to the Lead via `/af-create-spec`, or reports a
+  bug via `/af-create-bug`.
+- The Lead writes a SPEC as a JSON entry in `.af/docs/usm/specs.js`
+  (or in `.af/docs/usm/bugs.js` for bugs). PM confirms.
+- The Developer implements via `/af-implement-spec` or `/af-fix-bug`,
+  reading the SPEC entry directly from the JSON.
+- PM approves; PR is opened; SPEC `status` flips to `archived` (or bug
+  `status` to `fixed`) in the same JSON file.
 
 Full rules: `.af/docs/workflow.md`. Role definitions: `.af/agents/`.
 
@@ -183,7 +185,8 @@ Run `/af-init` in Claude Code to populate `.af/docs/architecture.md`,
 
 Re-run `install.sh` to refresh the global cache, then `/af-update` in this
 repo to bring `.af/` to that version. `/af-update v0.X.0` targets a specific
-version. Specs and host-populated docs are preserved.
+version. Host-populated docs and the USM data (data.js, specs.js, bugs.js)
+are preserved.
 AGENTS_EOF
     printf "  write  AGENTS.md\n"
 else

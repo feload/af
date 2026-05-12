@@ -2,7 +2,7 @@
 
 A lightweight workflow for shipping software with AI coding assistants (Claude Code, Cursor, etc.).
 
-af splits AI-assisted development into three roles — **PM**, **Lead**, and **Developer** — and routes work through small, well-bounded artifacts (SPECs and BUG SPECs) so the assistant always knows exactly what to build, and you always know exactly what got built.
+af splits AI-assisted development into three roles — **PM**, **Lead**, and **Developer** — and routes work through a User Story Map and small, well-bounded artifacts (SPECs and BUG SPECs) so the assistant always knows exactly what to build, and you always know exactly what got built. Everything lives inside the repo; there is no external tracker.
 
 ## Why af
 
@@ -17,13 +17,13 @@ The result: short, predictable AI sessions that stop where you expect them to.
 ## How it works
 
 ```
-PM: create card (external tracker — optionally via /af-create-card)
-PM → Lead: share card
-Lead: write SPEC → PM confirms → status: ready
+PM: backbone exists? if not → /af-create-backbone (Activities + Steps in data.js)
+PM: /af-create-story → US-#### proposed under a Step (slice: null, Backlog)
+PM: /af-create-spec → Lead writes SPEC → PM confirms → status: ready
 Developer: implement subtasks + write tests → hand off test tree and run commands to PM
 PM: review + run tests → status: approved
 Developer: create PR
-PM: approve PR → close card
+PM: approve PR → status: archived
 ```
 
 Each step is its own session — the assistant does one phase per command and stops, so there's no drift across phases.
@@ -62,7 +62,7 @@ sh af-install.sh v0.7.0
 
 ### Updating an existing repo
 
-When a new af version ships, re-run `install.sh` to refresh the global cache, then run `/af-update` inside any repo to bring its `.af/` up to that version. To target a specific version directly, pass it as an argument: `/af-update v0.7.0` (the helper fetches it from GitHub if not already cached). Updates overwrite framework files and bump `.af/VERSION`; they never touch `.af/specs/`. Host-populated docs (`architecture.md`, `domain.md`, `conventions.md`) are diffed against the new placeholder and you decide per file whether to keep, overwrite, or merge.
+When a new af version ships, re-run `install.sh` to refresh the global cache, then run `/af-update` inside any repo to bring its `.af/` up to that version. To target a specific version directly, pass it as an argument: `/af-update v0.8.0` (the helper fetches it from GitHub if not already cached). Updates overwrite framework files and bump `.af/VERSION`; they never touch the USM data (`.af/docs/usm/data.js`, `specs.js`, `bugs.js`). Host-populated docs (`architecture.md`, `domain.md`, `conventions.md`) are diffed against the new placeholder and you decide per file whether to keep, overwrite, or merge.
 
 ### Requirements
 
@@ -98,9 +98,13 @@ When a new af version ships, re-run `install.sh` to refresh the global cache, th
 │   ├── agents/
 │   ├── templates/
 │   ├── docs/
-│   └── specs/
-│       ├── active/
-│       └── archived/
+│   │   ├── architecture.md
+│   │   ├── domain.md
+│   │   ├── conventions.md
+│   │   ├── workflow.md
+│   │   ├── usm.md
+│   │   └── usm/            # data.js, specs.js, bugs.js, index.html, styles.css
+│   └── bin/
 ├── AGENTS.md               # only if you didn't already have one
 └── CLAUDE.md               # only if you didn't already have one
 ```
@@ -122,20 +126,27 @@ Existing files are never overwritten. If you already have `AGENTS.md` or `CLAUDE
 
 ## The flow in detail
 
+### Domain and backbone come first
+
+Before any feature work, two things must exist in the host project:
+
+- **`.af/docs/domain.md`** populated with entities, business rules, and glossary. `/af-init` writes a placeholder; you fill it.
+- **A backbone** in `.af/docs/usm/data.js` — Activities (the user's journey, left-to-right) and Steps (concrete actions inside each Activity). Run `/af-create-backbone` to draft or extend it. The command refuses to run if `domain.md` is still the placeholder.
+
 ### Feature work
 
-1. **PM creates a card** in whatever tracker they use (Linear, Jira, Trello, Azure DevOps — external to af). Optionally use `/af-create-card`, a backend-agnostic helper that drafts and submits cards via whatever tool the PM specifies (MCP, CLI, file, manual paste).
-2. **PM runs `/af-create-spec`** in a new session and describes the feature to the Lead.
-3. **Lead asks one clarifying question at a time** until the feature is clear, then drafts a SPEC using the [SPEC template](templates/spec.md).
-4. **PM reviews and confirms.** Status flips from `draft` to `ready`. SPEC is saved as `.af/specs/active/SPEC-####.md`.
-5. **PM runs `/af-implement-spec`** and hands the SPEC to the Developer.
-6. **Developer reads the SPEC, implements each subtask in order**, marks each `[x]`, and writes tests organized to read as a description of the application's behavior. Developer does not run the test suite — instead prints a tree of the tests added or modified in the session and hands the PM the exact commands to run them (and may optionally offer to run them on the PM's behalf).
+1. **PM runs `/af-create-story`** to file a new US under an existing Step. The Lead suggests the Step that best fits the story; PM confirms. New Stories land in Backlog (`slice: null`) by default.
+2. **PM runs `/af-create-spec`** in a new session and points the Lead at the US.
+3. **Lead asks one clarifying question at a time** until the SPEC is unambiguous, then drafts it using the [SPEC template](templates/spec.md) as a JSON entry in `.af/docs/usm/specs.js`.
+4. **PM reviews and confirms.** Status flips from `draft` to `ready`.
+5. **PM runs `/af-implement-spec`** and hands the SPEC ID to the Developer.
+6. **Developer reads the SPEC, implements each subtask in order**, flips each `done` to `true` in `specs.js`, and writes tests organized to read as a description of the application's behavior. Developer does not run the test suite — instead prints a tree of the tests added or modified in the session and hands the PM the exact commands to run them (and may optionally offer to run them on the PM's behalf).
 7. **PM runs the tests, verifies, and approves.** Developer opens a PR.
-8. **PM merges and archives** the SPEC into `.af/specs/archived/`.
+8. **PM merges**; SPEC status flips to `archived` and the entry stays in `specs.js` as a record.
 
 ### Bug work
 
-Same shape, but `/af-create-bug` lets the Lead read source files (narrowly — only files related to the bug) to identify root cause. `/af-fix-bug` requires a regression test. The same test handoff applies: Developer prints the test tree and the run commands, PM runs them.
+Same shape, but `/af-create-bug` lets the Lead read source files (narrowly — only files related to the bug) to identify root cause and write the BUG entry directly into `.af/docs/usm/bugs.js`. `/af-fix-bug` requires a regression test. The same test handoff applies: Developer prints the test tree and the run commands, PM runs them.
 
 ## SPEC quality bar
 

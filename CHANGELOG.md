@@ -2,6 +2,21 @@
 
 All notable changes to the af framework are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## v0.8.0 — 2026-05-12
+
+### Changed (breaking)
+- Scope creation moves inside af. There is no external tracker anymore — Stories live in the USM (`.af/docs/usm/data.js`) under Activities + Steps, and SPECs/Bugs link to them via `story`.
+- `/af-create-card` is removed and replaced by `/af-create-story`. `/af-create-story` requires an existing backbone (Activities + Steps in `data.js`); it refuses to run if `activities` is empty and tells the PM to run `/af-create-backbone` first. New Stories default to `slice: null` (Backlog). The Lead suggests the matching Step from the existing backbone; the PM confirms or asks for a new Step (added inline). Adding new Activities is reserved for `/af-create-backbone`.
+- `card` field removed from the SPEC and BUG schemas (`templates/spec.md`, `templates/bug.md`, `docs/usm.md`). The USM detail pane no longer renders a "Card: ..." line. Existing entries with a leftover `card` value are simply ignored.
+- `docs/workflow.md` rewritten: domain-first → backbone → stories → SPECs/Bugs. Removed every mention of external cards.
+
+### Added
+- `/af-create-backbone` slash command (opus/high). Drafts or extends the USM backbone (Activities + Steps) in `data.js`. Verifies `.af/docs/domain.md` has been populated (placeholders replaced) before running — refuses on an empty domain. Two modes: sketch a general structure or build piece by piece. Never creates Stories, never touches Slices. New Steps get `stories: []`.
+- `/af-create-story` slash command (sonnet/medium). Files a new US under an existing Step. Lead suggests the Step; PM confirms or asks for a new one (added inline). Default `slice: null`.
+
+### Removed
+- `.af/specs/active/` and `.af/specs/archived/` directories are no longer created by `install.sh` (per-project mode) — the JSON `specs.js`/`bugs.js` files have been canonical since v0.6.
+
 ## v0.7.0 — 2026-05-11
 
 ### Changed (breaking)

@@ -77,6 +77,14 @@ Patton-style structure:
 - **Stories** (vertical columns under each step) — the options or
   variants of how the user performs that step.
 
+A story's `status` follows this lifecycle:
+
+- `proposed` — PM filed it. Narrative may be complete; the inline SPEC may be empty or in draft.
+- `ready` — fully spec'd (inline content confirmed by the PM, or at least one external SPEC linked with `status: ready`). The Developer can pick it up.
+- `active` — the Developer is implementing.
+- `done` — implemented and accepted by the PM.
+- `dropped` — cut from scope.
+
 Stories are grouped into **horizontal bands** by version (slice).
 Vertical band order: unreleased slices on top (`planning` +
 `in-progress`, in planning order), then released versions (most recent
@@ -128,26 +136,52 @@ under `source/`:
 {
   "id": "US-0042",
   "title": "...",
-  "status": "proposed",         // proposed | active | done | dropped
+  "status": "proposed",         // proposed | ready | active | done | dropped
   "slice": "v1-0",              // slice id or null for Backlog
   "step": "create-account",     // step id from skeleton.json — REQUIRED
   "description": "As X, I want Y so that Z",
   "rationale": "why it matters (1-2 lines)",
   "acceptance": [],
-  "tasks": []                   // optional: [{ title, status }]
+  "tasks": [],                  // optional: [{ title, status }]
+
+  // Optional inline SPEC — present when the story carries its own
+  // implementation plan instead of (or in addition to) external SPEC files.
+  // Same fields as a standalone SPEC, minus id/title/status/story (those live
+  // on the US itself). When any of these are present, the US is "self-spec'd".
+  "context": "why we are building it (one short paragraph)",
+  "problem": "what is broken or missing (specific)",
+  "constraints": [],            // array of bullets
+  "subtasks": [                 // ordered, independently implementable subtasks
+    {
+      "description": "[verb] — files: `path` — what to change: [what] — done when: [criterion]",
+      "done": false
+    }
+  ],
+  "edgeCases": [],              // array: `<trigger> → <behavior>`
+  "doneCriteria": []            // array: PM walkthrough, one verifiable step per bullet
 }
 ```
 
 The build script groups stories by `step`, sorts them by `id` within
 each step, and nests them under the matching step in the skeleton to
-produce `window.USM_DATA = { slices, activities }`.
+produce `window.USM_DATA = { slices, activities }`. The inline SPEC
+fields are passed through untouched so the viewer can render them.
 
 To find a story without opening every file, grep `source/INDEX.md`.
 
-Stories **do not carry** a `spec` field — the relationship goes the
-other way around: each SPEC points to its story via `story`. The USM
-filters SPECs (and bugs) by story `id` when the panel opens. A story
-can have several SPECs and several bugs.
+A story can be spec'd two ways:
+
+1. **Inline** (default for 1:1 work) — the SPEC fields above live on the
+   US itself. No separate SPEC file. The PM confirms the inline content
+   and flips US `status` to `ready`. The Developer reads the US and
+   implements its `subtasks` directly.
+2. **External** — one or more standalone files under `source/specs/`
+   point at the US via their `story` field. Use this for cross-cutting
+   work that doesn't map to a single US (`story: null`), or when a US
+   is large enough to warrant multiple SPECs.
+
+Both forms can coexist on the same US: inline subtasks for the main
+slice of work plus one or more external SPECs for sub-pieces.
 
 ### Slice (release) goal
 
@@ -189,7 +223,20 @@ for a deployment window).
 
 ## SPECs schema
 
-One file per SPEC under `source/specs/SPEC-XXXX.json`:
+A SPEC's content (`context`, `problem`, `constraints`, `subtasks`,
+`edgeCases`, `doneCriteria`) lives in one of two places:
+
+- **Inline on the US** — preferred for 1:1 work. The fields sit
+  directly on `source/stories/US-XXXX.json` (see the schema above).
+  No file under `source/specs/` is created. The US's own `status`
+  drives readiness: `proposed` while the inline SPEC is in draft,
+  `ready` once the PM confirms.
+- **Standalone file** — under `source/specs/SPEC-XXXX.json`. Use for
+  cross-cutting work that doesn't map to a single US (`story: null`),
+  or when a US is large enough to warrant several SPECs. Each
+  standalone SPEC carries its own `status` lifecycle.
+
+One file per standalone SPEC under `source/specs/SPEC-XXXX.json`:
 
 ```json
 {
@@ -253,8 +300,9 @@ One file per bug under `source/bugs/BUG-XXXX.json`:
 `doneCriteria` is an array of strings, same rule as in SPECs. One short
 sentence per bullet.
 
-When a story's detail opens, the panel shows each SPEC and each bug as
-a collapsible card with all of these sections. By default, cards open
+When a story's detail opens, the panel shows the story's inline SPEC
+content (if any) first, then each standalone SPEC and each bug as a
+collapsible card with all of these sections. By default, cards open
 if they're alive (`ready`/`approved` for SPECs, `open`/`in-progress`
 for bugs) and stay closed if they're done.
 

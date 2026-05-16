@@ -14,6 +14,8 @@
 
   --status-proposed-bg: #f3f4f6;
   --status-proposed-border: #d1d5db;
+  --status-ready-bg: #dbeafe;
+  --status-ready-border: #3b82f6;
   --status-active-bg: #fde68a;
   --status-active-border: #f59e0b;
   --status-done-bg: #bbf7d0;
@@ -37,6 +39,8 @@
 
     --status-proposed-bg: #1f2937;
     --status-proposed-border: #4b5563;
+    --status-ready-bg: #1e3a8a;
+    --status-ready-border: #60a5fa;
     --status-active-bg: #78350f;
     --status-active-border: #f59e0b;
     --status-done-bg: #14532d;
@@ -199,6 +203,7 @@ header p {
 }
 
 .legend-swatch.proposed { background: var(--status-proposed-bg); border-color: var(--status-proposed-border); }
+.legend-swatch.ready { background: var(--status-ready-bg); border-color: var(--status-ready-border); }
 .legend-swatch.active { background: var(--status-active-bg); border-color: var(--status-active-border); }
 .legend-swatch.done { background: var(--status-done-bg); border-color: var(--status-done-border); }
 .legend-swatch.dropped { background: var(--status-dropped-bg); border-color: var(--status-dropped-border); }
@@ -493,6 +498,7 @@ a.story:hover {
 }
 
 .story.status-proposed { background: var(--status-proposed-bg); border-color: var(--status-proposed-border); }
+.story.status-ready    { background: var(--status-ready-bg);    border-color: var(--status-ready-border); }
 .story.status-active   { background: var(--status-active-bg);   border-color: var(--status-active-border); }
 .story.status-done     { background: var(--status-done-bg);     border-color: var(--status-done-border); }
 .story.status-dropped  { background: var(--status-dropped-bg);  border-color: var(--status-dropped-border); text-decoration: line-through; color: var(--color-text-muted); }
@@ -569,6 +575,7 @@ a.story:hover {
 }
 
 .status-badge.proposed { background: var(--status-proposed-bg); border-color: var(--status-proposed-border); color: var(--color-text); }
+.status-badge.ready    { background: var(--status-ready-bg);    border-color: var(--status-ready-border);   color: var(--color-text); }
 .status-badge.active   { background: var(--status-active-bg);   border-color: var(--status-active-border); color: var(--color-text); }
 .status-badge.done     { background: var(--status-done-bg);     border-color: var(--status-done-border);   color: var(--color-text); }
 .status-badge.dropped  { background: var(--status-dropped-bg);  border-color: var(--status-dropped-border); color: var(--color-text-muted); }
@@ -872,6 +879,11 @@ a.story:hover {
 
 .pane-card .card-meta + .card-section,
 .pane-card > summary + .card-section {
+  border-top: none;
+}
+
+/* Inline SPEC on a US: no summary header, so the first section sits flush. */
+.pane-card.spec-inline > .card-section:first-child {
   border-top: none;
 }
 

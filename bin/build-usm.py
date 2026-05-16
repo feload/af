@@ -106,6 +106,35 @@ def build_index() -> None:
         "",
     ]
 
+    # Pre-compute which stories have at least one external SPEC linked, so the
+    # story rows can show whether the SPEC is inline, external, or missing.
+    external_specs_by_story: dict[str, int] = {}
+    specs_dir = SOURCE / "specs"
+    if specs_dir.exists():
+        for f in sorted(specs_dir.glob("*.json")):
+            s = load_json(f)
+            story_id = s.get("story")
+            if story_id:
+                external_specs_by_story[story_id] = external_specs_by_story.get(story_id, 0) + 1
+
+    def spec_kind(story: dict) -> str:
+        inline = bool(
+            story.get("context")
+            or story.get("problem")
+            or story.get("constraints")
+            or story.get("subtasks")
+            or story.get("edgeCases")
+            or story.get("doneCriteria")
+        )
+        external_count = external_specs_by_story.get(story["id"], 0)
+        if inline and external_count:
+            return f"inline + {external_count} ext"
+        if inline:
+            return "inline"
+        if external_count:
+            return f"external ({external_count})"
+        return "—"
+
     # Stories
     story_rows: list[tuple[str, ...]] = []
     stories_dir = SOURCE / "stories"
@@ -118,14 +147,14 @@ def build_index() -> None:
                 s.get("status", ""),
                 s.get("slice") or "—",
                 s.get("step", "—"),
+                spec_kind(s),
             ))
-    lines += ["## Stories", "", "| ID | Title | Status | Slice | Step |", "|---|---|---|---|---|"]
-    lines += ["| " + " | ".join(r) + " |" for r in story_rows] or ["| _none_ |  |  |  |  |"]
+    lines += ["## Stories", "", "| ID | Title | Status | Slice | Step | Spec |", "|---|---|---|---|---|---|"]
+    lines += ["| " + " | ".join(r) + " |" for r in story_rows] or ["| _none_ |  |  |  |  |  |"]
     lines += [""]
 
     # SPECs
     spec_rows: list[tuple[str, ...]] = []
-    specs_dir = SOURCE / "specs"
     if specs_dir.exists():
         for f in sorted(specs_dir.glob("*.json")):
             s = load_json(f)

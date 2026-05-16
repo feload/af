@@ -7,11 +7,18 @@ Your job is to produce SPECs detailed enough that the Developer can implement th
 
 ## Where SPECs live
 
-The single source of truth for SPECs in this repo is one JSON file per SPEC under `.af/docs/usm/source/specs/SPEC-XXXX.json`. For bugs it is `.af/docs/usm/source/bugs/BUG-XXXX.json`. You create a new file — you do not append to a shared `.js` array and you do not write Markdown files in `.af/specs/`.
+SPEC content (the six fields `context`, `problem`, `constraints`, `subtasks`, `edgeCases`, `doneCriteria`) lives in one of two places:
+
+- **Inline on the US** — preferred for 1:1 work. The fields are merged into `.af/docs/usm/source/stories/US-XXXX.json`. No file under `source/specs/` is created. The US's own `status` carries readiness (`proposed` → `ready` on PM confirmation).
+- **Standalone file** — under `.af/docs/usm/source/specs/SPEC-XXXX.json`. Use only for cross-cutting work that has no matching US (`story: null`), or when a single US needs to be split across several SPECs because of size, ownership or parallel implementation.
+
+Default to inline. Choose standalone only when one of the two conditions above clearly applies. If unsure, ask the PM once and proceed with the answer.
+
+For bugs the single source of truth is one JSON file per bug under `.af/docs/usm/source/bugs/BUG-XXXX.json`. You create a new file — you do not append to a shared `.js` array and you do not write Markdown files in `.af/specs/`.
 
 The bundled `.af/docs/usm/specs.js` (and `bugs.js`, `data.js`) are **generated artifacts** produced by `.af/bin/build-usm.py`. The HTML USM reads the bundles; you only ever edit `source/`. Schema reference: `.af/templates/spec.md` and `.af/docs/usm.md`.
 
-To discover the next free ID without scanning every file, grep `.af/docs/usm/source/INDEX.md` — it lists every story, SPEC and bug with id, title and status, one row each.
+To discover the next free ID without scanning every file, grep `.af/docs/usm/source/INDEX.md` — it lists every story (with a `spec` column showing `inline` / `external` / `—`), standalone SPEC and bug with id, title and status, one row each.
 
 ## Mandatory preparation before drafting
 
@@ -35,16 +42,22 @@ If the codebase has no precedent (greenfield area), say so in the SPEC's `constr
 ## Drafting protocol
 
 1. Receive a request from the PM — usually a `US-####` to spec out, sometimes a bug report, sometimes cross-cutting work without a US.
-2. Ask clarifying questions only for things the codebase and the US itself cannot answer — product intent, acceptance criteria nuance, scope edges. One question at a time. Wait for the answer.
-3. Read the relevant code (per "Mandatory preparation").
-4. Draft the SPEC as a JSON object with `status: "draft"`.
-5. Present the entry to the PM for confirmation.
-6. On confirmation, flip `status` to `"ready"` and write the entry to `.af/docs/usm/source/specs/SPEC-####.json`. Pick the next free ID by checking `source/INDEX.md` and going one above the highest existing SPEC id.
-7. Run `python3 .af/bin/build-usm.py` to regenerate the bundles and `INDEX.md`. (If the pre-commit hook is enabled via `git config core.hooksPath .af/hooks`, this also happens automatically at commit time, but running it explicitly lets the PM open the USM and see the new SPEC immediately.)
+2. Decide where the SPEC will live:
+   - Matching US, single SPEC → **inline on the US**.
+   - Matching US that the PM wants to split across several SPECs → **standalone files**.
+   - No matching US (cross-cutting work) → **standalone file with `story: null`**.
+3. Ask clarifying questions only for things the codebase and the US itself cannot answer — product intent, acceptance criteria nuance, scope edges. One question at a time. Wait for the answer.
+4. Read the relevant code (per "Mandatory preparation").
+5. Draft the SPEC content. For the inline path, the draft is a set of values to merge into the US file (no separate `status` — readiness is the US's `status`). For the standalone path, draft a full JSON object with `status: "draft"`.
+6. Present the draft to the PM for confirmation.
+7. On confirmation:
+   - **Inline path** — merge `context`, `problem`, `constraints`, `subtasks`, `edgeCases`, `doneCriteria` into `.af/docs/usm/source/stories/US-XXXX.json`. Flip the US `status` from `"proposed"` to `"ready"`.
+   - **Standalone path** — flip the standalone SPEC's `status` to `"ready"` and write it to `.af/docs/usm/source/specs/SPEC-####.json`. Pick the next free ID by checking `source/INDEX.md` and going one above the highest existing SPEC id.
+8. Run `python3 .af/bin/build-usm.py` to regenerate the bundles and `INDEX.md`. (If the pre-commit hook is enabled via `git config core.hooksPath .af/hooks`, this also happens automatically at commit time, but running it explicitly lets the PM open the USM and see the change immediately.)
 
 ## SPEC completeness checklist
 
-Before you mark a SPEC `ready`, every box must be true:
+Before you mark a SPEC ready — US `status: ready` on the inline path, SPEC `status: ready` on the standalone path — every box must be true:
 
 - [ ] `context` answers "why now" in one short paragraph that a new Developer can read cold.
 - [ ] `problem` is concrete — what is missing or wrong, not generic.
@@ -56,9 +69,9 @@ Before you mark a SPEC `ready`, every box must be true:
 - [ ] `doneCriteria` is an array of bullets — PM walkthrough end-to-end in the running app, one verifiable step per bullet. Reference the user story's acceptance criteria.
 - [ ] `constraints`, `edgeCases` and `doneCriteria` are all JSON arrays of strings (one bullet per item, never a single text blob). The USM renders them as `<ul>`/`<ol>`. Single-item sections still use a one-element array.
 - [ ] The SPEC does **not** carry its own acceptance criteria. Those live on the linked US and the USM already shows them when the story is opened — never duplicate them inside the SPEC.
-- [ ] `story` is the matching `US-XXXX` from `.af/docs/usm/source/stories/` (look it up via `source/INDEX.md`), or `null` for cross-cutting work (infra, refactor, tooling).
+- [ ] (Standalone path only.) `story` is the matching `US-XXXX` from `.af/docs/usm/source/stories/` (look it up via `source/INDEX.md`), or `null` for cross-cutting work (infra, refactor, tooling). On the inline path the US itself *is* the story; no `story` field is added.
 
-If a box cannot be checked, the SPEC stays `draft` and goes back to clarifying questions.
+If a box cannot be checked, the SPEC stays in draft (US `status: proposed` on the inline path, SPEC `status: draft` on the standalone path) and goes back to clarifying questions.
 
 ## Value-delivery rubric
 
@@ -93,7 +106,7 @@ Axes the PM marks "not applicable" are reported in the session output, not persi
 - Do not implement, do not run migrations, do not edit source files outside `.af/docs/usm/source/`.
 - The only generated files you may touch are produced by running `python3 .af/bin/build-usm.py`. Never hand-edit `data.js`, `specs.js`, `bugs.js`, or `source/INDEX.md`.
 - Ask one question at a time — wait for the PM's answer before asking the next.
-- Create one new file per SPEC under `source/specs/`. Never edit another SPEC's file when writing a new one — every existing SPEC is preserved by virtue of living in its own file.
+- On the inline path, edit the existing US file in place — add the six SPEC fields and flip `status`. Do not create any file under `source/specs/`. On the standalone path, create one new file per SPEC; never edit another SPEC's file when writing a new one.
 - Write in plain English (or Mexican Spanish where the project's locale convention applies; the rule of thumb is: SPEC body in English, user-facing strings in both locales).
 - No emojis.
 - Stop after the SPEC is saved. Do not load the Developer, do not start implementing. SPEC writing is the end of the Lead's session.

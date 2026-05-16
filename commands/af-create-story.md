@@ -32,6 +32,6 @@ effort: medium
 8. On confirmation, write the entry to `.af/docs/usm/source/stories/US-####.json`. One file, one story — never append to or edit another story's file.
 9. Run `python3 .af/bin/build-usm.py` so the generated `data.js` and `source/INDEX.md` reflect the new story.
 
-**Output:** The ID of the confirmed US (e.g. `US-0014`), the Activity/Step it was attached to, the slice it was filed under (or `null` for Backlog), and the file written (`.af/docs/usm/source/stories/US-XXXX.json`). The HTML USM at `.af/docs/usm/index.html` picks it up automatically on next reload.
+**Output:** The ID of the confirmed US (e.g. `US-0014`), the Activity/Step it was attached to, the slice it was filed under (or `null` for Backlog), and the file written (`.af/docs/usm/source/stories/US-XXXX.json`). The new US lands with `status: "proposed"` and no inline SPEC content — the PM runs `/af-create-spec` in a separate session to add the implementation plan and flip the US to `ready`. The HTML USM at `.af/docs/usm/index.html` picks it up automatically on next reload.
 
 **Stop here.** Do not load the Lead for SPEC drafting. Story creation is its own session — the PM runs `/af-create-spec` in a separate session when they're ready to spec out the story.

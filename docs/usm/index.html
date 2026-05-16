@@ -14,6 +14,7 @@
         <p>Actividades y pasos en la parte superior; bajo cada paso, las historias agrupadas por versión. Click en una historia para ver su detalle. Click en el chip de una versión para colapsarla. Ctrl + rueda del mouse para scroll horizontal.</p>
         <div class="legend" aria-label="Leyenda de estatus">
           <span class="legend-item"><span class="legend-swatch proposed"></span>propuesta</span>
+          <span class="legend-item"><span class="legend-swatch ready"></span>lista para iniciar</span>
           <span class="legend-item"><span class="legend-swatch active"></span>en desarrollo</span>
           <span class="legend-item"><span class="legend-swatch done"></span>lista</span>
           <span class="legend-item"><span class="legend-swatch dropped"></span>descartada</span>
@@ -62,6 +63,7 @@
 
       const STATUS_LABEL = {
         proposed: 'propuesta',
+        ready: 'lista para iniciar',
         active: 'en desarrollo',
         done: 'lista',
         dropped: 'descartada'
@@ -685,6 +687,35 @@
         return html;
       }
 
+      function hasInlineSpec(story) {
+        return Boolean(
+          (story.context && story.context.trim()) ||
+          (story.problem && story.problem.trim()) ||
+          (Array.isArray(story.constraints) && story.constraints.length > 0) ||
+          (Array.isArray(story.subtasks) && story.subtasks.length > 0) ||
+          (Array.isArray(story.edgeCases) && story.edgeCases.length > 0) ||
+          (Array.isArray(story.doneCriteria) && story.doneCriteria.length > 0)
+        );
+      }
+
+      function renderInlineSpec(story) {
+        // Lifecycle on the US: proposed | ready | active | done | dropped.
+        // The pane shows the US status as the readiness signal — no separate
+        // spec id/title/status row.
+        let html = '<div class="pane-card spec-card spec-inline">';
+        html += renderTextSection('Contexto', story.context);
+        html += renderTextSection('Problema', story.problem);
+        html += renderTextSection('Restricciones', story.constraints);
+        if (Array.isArray(story.subtasks) && story.subtasks.length > 0) {
+          html += '<div class="card-section"><h4>Subtareas</h4>' +
+                  renderSubtaskList(story.subtasks) + '</div>';
+        }
+        html += renderTextSection('Edge cases', story.edgeCases);
+        html += renderTextSection('Done criteria', story.doneCriteria);
+        html += '</div>';
+        return html;
+      }
+
       function renderSpec(spec) {
         const st = spec.status || 'draft';
         const stLabel = SPEC_STATUS_LABEL[st] || st;
@@ -803,9 +834,16 @@
           html += '</ul></div>';
         }
 
+        if (hasInlineSpec(story)) {
+          html += '<div class="pane-section"><h3>SPEC</h3>';
+          html += renderInlineSpec(story);
+          html += '</div>';
+        }
+
         const relatedSpecs = specs.filter(function (s) { return s.story === story.id; });
         if (relatedSpecs.length > 0) {
-          html += '<div class="pane-section"><h3>SPECs relacionados</h3>';
+          const heading = hasInlineSpec(story) ? 'SPECs adicionales' : 'SPECs relacionados';
+          html += '<div class="pane-section"><h3>' + heading + '</h3>';
           relatedSpecs.forEach(function (s) { html += renderSpec(s); });
           html += '</div>';
         }

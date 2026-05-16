@@ -1,6 +1,13 @@
-# SPEC schema (one file per SPEC under `.af/docs/usm/source/specs/`)
+# SPEC schema
 
-A SPEC is a JSON object stored in its own file at `.af/docs/usm/source/specs/SPEC-XXXX.json`. The Lead creates one new file per feature. The Developer reads from there. The bundled `.af/docs/usm/specs.js` is a generated artifact rebuilt by `.af/bin/build-usm.py` — never hand-edit it. Full reading rules: `.af/agents/lead.md`. Full schema docs: `.af/docs/usm.md`.
+SPEC content (`context`, `problem`, `constraints`, `subtasks`, `edgeCases`, `doneCriteria`) can live in two places:
+
+- **Inline on the US** — preferred for 1:1 work. The same six fields below sit directly on `.af/docs/usm/source/stories/US-XXXX.json`. No standalone file is created. The US's own `status` drives readiness (`proposed` → `ready` when the PM confirms the inline content).
+- **Standalone file** — under `.af/docs/usm/source/specs/SPEC-XXXX.json`. Use when the work is cross-cutting (no matching US, `story: null`) or when a single US is large enough to warrant multiple SPECs.
+
+Either way, the fields below describe what the Lead writes. The Developer reads the SPEC from the US (inline path) or from the standalone file. The bundled `.af/docs/usm/specs.js` is a generated artifact rebuilt by `.af/bin/build-usm.py` — never hand-edit it. Full reading rules: `.af/agents/lead.md`. Full schema docs: `.af/docs/usm.md`.
+
+## Standalone SPEC file
 
 ```js
 {
@@ -61,10 +68,21 @@ Forbidden subtask verbs: `Investigate`, `Decide`, `Explore`, `Consider`, `Figure
 - `approved` — implemented and accepted by PM, awaiting PR.
 - `archived` — PR merged. Entry stays as a record.
 
+## Inline SPEC on a US
+
+When the SPEC is written inline on a US, the JSON above is collapsed onto `source/stories/US-XXXX.json` minus the four fields that belong to the US itself: `id`, `title`, `status` and `story`. Only `context`, `problem`, `constraints`, `subtasks`, `edgeCases` and `doneCriteria` are added to the story file. The US's `status` becomes the readiness signal:
+
+- `proposed` → inline SPEC still in draft (or not started yet).
+- `ready` → inline SPEC confirmed by the PM; Developer can pick it up.
+- `active` → Developer is implementing.
+- `done` → implemented and accepted by the PM.
+
+Subtasks on the inline SPEC obey the same format and rules as the standalone version. The completeness checklist in `.af/agents/lead.md` applies identically — the only difference is the file the Lead writes to.
+
 ## Rules
 
-- Every field except `edgeCases` must be filled before `ready`.
-- `story` is optional. Leave `null` for cross-cutting work; drafts without `story` are surfaced in the "Unassigned" tray of the USM header.
+- Every field except `edgeCases` must be filled before the SPEC is marked ready (US `status: ready` for inline, SPEC `status: ready` for standalone).
+- For a standalone SPEC, `story` is optional. Leave `null` for cross-cutting work; drafts without `story` are surfaced in the "Unassigned" tray of the USM header.
 - The SPEC does **not** carry acceptance criteria — those live on the linked US (`acceptance` array in `.af/docs/usm/source/stories/US-XXXX.json`) and the USM already shows them when the user opens the story. The SPEC's `doneCriteria` is the PM walkthrough that proves those criteria are satisfied end-to-end.
 - `constraints`, `edgeCases` and `doneCriteria` are arrays of strings. One bullet per item, each item one short sentence ending with a period. Never a single text blob — the USM renders these as `<ul>`/`<ol>`. If a section truly has only one item, still wrap it in an array of one.
 - Subtasks must include the tests the Developer must write and the i18n keys to add (when there is user-facing text).

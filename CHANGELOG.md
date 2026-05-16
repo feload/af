@@ -2,6 +2,19 @@
 
 All notable changes to the af framework are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## v0.12.0 — 2026-05-16
+
+### Changed (breaking)
+- SPEC content lives **inline on the US by default**. The six fields `context`, `problem`, `constraints`, `subtasks`, `edgeCases` and `doneCriteria` are now optional fields on `source/stories/US-XXXX.json`, and `/af-create-spec` writes them there in place instead of creating a separate file. Reason: most stories map 1:1 to a single SPEC, so the standalone file was ceremony — the inline path removes a file and a state machine for the common case while keeping the role boundary (Lead spec, Developer implement) intact.
+- A standalone file under `source/specs/SPEC-XXXX.json` is still created for two cases: (a) cross-cutting work that has no matching US (`story: null`), and (b) a US the PM wants to split across multiple SPECs. Existing standalone SPECs keep working with no migration.
+- US lifecycle gains a `ready` state: `proposed | ready | active | done | dropped`. `ready` means the US is fully spec'd (inline SPEC confirmed by the PM, or at least one linked standalone SPEC at `ready`) and the Developer can pick it up. The standalone SPEC lifecycle (`draft | ready | approved | archived`) is unchanged.
+- `/af-implement-spec` now accepts either `US-XXXX` (inline path — verifies US `status: ready`, flips it to `active` on start, PM flips to `done` on approval) or `SPEC-XXXX` (standalone path — unchanged behavior).
+- `/af-review-slice` readiness table is reworded so a row resolves to `ready` when the US itself is at `status: ready` (inline) **or** any of its linked SPECs is `ready`.
+
+### Added
+- USM viewer renders inline SPEC content on the story panel as a `SPEC` section above the (now optional) `SPECs adicionales` block. The `ready` US status gets its own swatch in the header legend, a blue tile background on the map, and a status badge on the panel.
+- `source/INDEX.md` story table gains a `Spec` column: `inline`, `external (N)`, `inline + N ext`, or `—`.
+
 ## v0.11.0 — 2026-05-16
 
 ### Added

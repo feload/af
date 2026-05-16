@@ -19,11 +19,11 @@ The result: short, predictable AI sessions that stop where you expect them to.
 ```
 PM: backbone exists? if not → /af-create-backbone (Activities + Steps in data.js)
 PM: /af-create-story → US-#### proposed under a Step (slice: null, Backlog)
-PM: /af-create-spec → Lead writes SPEC → PM confirms → status: ready
-Developer: implement subtasks + write tests → hand off test tree and run commands to PM
-PM: review + run tests → status: approved
+PM: /af-create-spec → Lead writes SPEC inline on the US (or a standalone file for cross-cutting / multi-SPEC work) → PM confirms → US status: ready
+Developer: /af-implement-spec <US-####|SPEC-####> → implement subtasks + write tests → hand off test tree and run commands to PM
+PM: review + run tests → US status: done (standalone SPEC: approved)
 Developer: create PR
-PM: approve PR → status: archived
+PM: approve PR → entry kept as a record (US done, standalone SPEC archived)
 ```
 
 Each step is its own session — the assistant does one phase per command and stops, so there's no drift across phases.
@@ -136,13 +136,13 @@ Before any feature work, two things must exist in the host project:
 ### Feature work
 
 1. **PM runs `/af-create-story`** to file a new US under an existing Step. The Lead suggests the Step that best fits the story; PM confirms. New Stories land in Backlog (`slice: null`) by default.
-2. **PM runs `/af-create-spec`** in a new session and points the Lead at the US.
-3. **Lead asks one clarifying question at a time** until the SPEC is unambiguous, then drafts it using the [SPEC template](templates/spec.md) as a JSON entry in `.af/docs/usm/specs.js`.
-4. **PM reviews and confirms.** Status flips from `draft` to `ready`.
-5. **PM runs `/af-implement-spec`** and hands the SPEC ID to the Developer.
-6. **Developer reads the SPEC, implements each subtask in order**, flips each `done` to `true` in `specs.js`, and writes tests organized to read as a description of the application's behavior. Developer does not run the test suite — instead prints a tree of the tests added or modified in the session and hands the PM the exact commands to run them (and may optionally offer to run them on the PM's behalf).
-7. **PM runs the tests, verifies, and approves.** Developer opens a PR.
-8. **PM merges**; SPEC status flips to `archived` and the entry stays in `specs.js` as a record.
+2. **PM runs `/af-create-spec`** in a new session and points the Lead at the US. By default the SPEC content is written **inline on the US** (six extra fields on `source/stories/US-XXXX.json`); a standalone file under `source/specs/` is only created for cross-cutting work or US that need multiple SPECs.
+3. **Lead asks one clarifying question at a time** until the SPEC is unambiguous, then drafts it using the [SPEC template](templates/spec.md).
+4. **PM reviews and confirms.** On the inline path the US `status` flips from `proposed` to `ready`; on the standalone path the SPEC `status` flips from `draft` to `ready`.
+5. **PM runs `/af-implement-spec`** with either the US id (inline) or the SPEC id (standalone) and hands it to the Developer.
+6. **Developer reads the work item, implements each subtask in order**, flips each `done` to `true` in the same JSON file, and writes tests organized to read as a description of the application's behavior. Developer does not run the test suite — instead prints a tree of the tests added or modified in the session and hands the PM the exact commands to run them (and may optionally offer to run them on the PM's behalf).
+7. **PM runs the tests, verifies, and accepts.** Inline path: US `status` → `done`. Standalone path: SPEC `status` → `approved`. Developer opens a PR.
+8. **PM merges**; the entry stays in `source/` as a record (US `done`, or standalone SPEC `archived`).
 
 ### Bug work
 

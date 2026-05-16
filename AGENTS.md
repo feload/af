@@ -10,9 +10,13 @@ For the public-facing description, see [README.md](README.md).
 - `commands/` — canonical source of slash commands. Installed into `~/.claude/commands/` by default, or `.claude/commands/` under `--local`
 - `templates/` — SPEC and BUG SPEC templates
 - `docs/workflow.md` — the workflow rules
+- `docs/usm.md`, `docs/usm/{index.html,styles.css}` — USM viewer + schema doc
 - `docs/architecture.md`, `docs/domain.md`, `docs/conventions.md` — placeholder templates for host-side context, populated by `/af-init` in the host
-- `bin/bootstrap-here.sh` — POSIX helper that copies cached framework files from `~/.af/<version>/` into the current repo's `.af/`. Invoked by `/af-init`
-- `bin/update-here.sh` — POSIX helper that overwrites a host's framework files to a target version. Invoked by `/af-update`
+- `bin/bootstrap-here.sh` — POSIX helper that copies cached framework files from `~/.af/<version>/` into the current repo's `.af/` and seeds an empty `.af/docs/usm/source/` tree. Invoked by `/af-init`
+- `bin/update-here.sh` — POSIX helper that overwrites a host's framework files to a target version, runs the migrators on pre-source hosts, and regenerates the USM bundles. Invoked by `/af-update`
+- `bin/build-usm.py` — regenerates the bundled `data.js`/`specs.js`/`bugs.js` and `source/INDEX.md` from per-item JSON under `.af/docs/usm/source/`. Installed into the host
+- `bin/migrate-data-to-source.py`, `bin/migrate-specs-bugs-to-source.py` — one-shot migrators for hosts upgrading from the pre-source layout. Installed into the host so they can run them later if needed
+- `hooks/pre-commit` — git pre-commit hook that rebuilds and re-stages the USM bundles when anything under `source/` is staged. Installed into the host; opt-in via `git config core.hooksPath .af/hooks`
 - `MANIFEST` — list of host-installable paths with target locations
 - `install.sh` — POSIX shell installer (global default, `--local` per-project)
 - `README.md`, `CHANGELOG.md`, `LICENSE` — framework metadata, never installed

@@ -5,17 +5,17 @@
 # files cached at ~/.af/<version>/. Run /af-init in any repo to bootstrap it.
 #
 #   curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh
-#   curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh -s -- v0.7.0
+#   curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh -s -- v0.9.0
 #
 # Per-project install — drops everything into the current directory:
 #
 #   curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh -s -- --local
-#   curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh -s -- --local v0.7.0
+#   curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh -s -- --local v0.9.0
 #
 # Two-step (recommended for review):
 #   curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh -o af-install.sh
 #   less af-install.sh
-#   sh af-install.sh v0.7.0
+#   sh af-install.sh v0.9.0
 #
 # Existing files are never overwritten.
 
@@ -154,6 +154,31 @@ fi
 printf "%s\n" "$VERSION" > .af/VERSION
 printf "  write  .af/VERSION\n"
 
+# Seed the source/ tree so the USM bundles can be generated. The MANIFEST does
+# not list per-project content; we create empty placeholders here instead.
+if [ ! -f .af/docs/usm/source/skeleton.json ]; then
+    mkdir -p .af/docs/usm/source
+    printf '{\n  "activities": []\n}\n' > .af/docs/usm/source/skeleton.json
+    printf "  write  .af/docs/usm/source/skeleton.json\n"
+fi
+for dir in releases stories specs bugs; do
+    keep=".af/docs/usm/source/${dir}/.gitkeep"
+    if [ ! -e "$keep" ]; then
+        mkdir -p ".af/docs/usm/source/${dir}"
+        : > "$keep"
+        printf "  write  %s\n" "$keep"
+    fi
+done
+
+# Generate the bundled .js files so the static viewer has something to read.
+if command -v python3 >/dev/null 2>&1; then
+    python3 .af/bin/build-usm.py >/dev/null 2>&1 || \
+        printf "  warn   build-usm.py failed — run it manually before opening the USM\n"
+    printf "  build  .af/docs/usm/{data,specs,bugs}.js + source/INDEX.md\n"
+else
+    printf "  warn   python3 not found — run python3 .af/bin/build-usm.py before opening the USM\n"
+fi
+
 if [ ! -f AGENTS.md ]; then
     cat > AGENTS.md <<'AGENTS_EOF'
 # AGENTS.md
@@ -163,16 +188,27 @@ This project uses the **af** AI-assisted development framework.
 ## Workflow
 
 - The PM (you) shapes the USM backbone via `/af-create-backbone`
-  (Activities + Steps under `.af/docs/usm/data.js`) and files stories
-  under those Steps via `/af-create-story`.
+  (Activities + Steps under `.af/docs/usm/source/skeleton.json`) and
+  files stories under those Steps via `/af-create-story` (one file per
+  story under `.af/docs/usm/source/stories/`).
 - The PM hands a story to the Lead via `/af-create-spec`, or reports a
   bug via `/af-create-bug`.
-- The Lead writes a SPEC as a JSON entry in `.af/docs/usm/specs.js`
-  (or in `.af/docs/usm/bugs.js` for bugs). PM confirms.
+- The Lead writes one JSON file per SPEC under
+  `.af/docs/usm/source/specs/SPEC-XXXX.json` (or
+  `.af/docs/usm/source/bugs/BUG-XXXX.json` for bugs). PM confirms.
 - The Developer implements via `/af-implement-spec` or `/af-fix-bug`,
-  reading the SPEC entry directly from the JSON.
+  reading the SPEC file directly from `source/`.
 - PM approves; PR is opened; SPEC `status` flips to `archived` (or bug
   `status` to `fixed`) in the same JSON file.
+
+The bundled `.af/docs/usm/{data,specs,bugs}.js` are **generated
+artifacts** — never hand-edit them. Run
+`python3 .af/bin/build-usm.py` after editing anything under `source/`,
+or enable the pre-commit hook to do it automatically:
+
+```
+git config core.hooksPath .af/hooks
+```
 
 Full rules: `.af/docs/workflow.md`. Role definitions: `.af/agents/`.
 
@@ -183,10 +219,11 @@ Run `/af-init` in Claude Code to populate `.af/docs/architecture.md`,
 
 ## Updating
 
-Re-run `install.sh` to refresh the global cache, then `/af-update` in this
-repo to bring `.af/` to that version. `/af-update v0.X.0` targets a specific
-version. Host-populated docs and the USM data (data.js, specs.js, bugs.js)
-are preserved.
+Re-run `install.sh` to refresh the global cache, then `/af-update` in
+this repo to bring `.af/` to that version. `/af-update v0.X.0` targets
+a specific version. Host-populated docs and everything under
+`.af/docs/usm/source/` are preserved; the bundled `.js` files are
+regenerated.
 AGENTS_EOF
     printf "  write  AGENTS.md\n"
 else
@@ -208,4 +245,11 @@ Next steps:
   1. Open this project in Claude Code.
   2. Run /af-init to populate .af/docs/architecture.md, .af/docs/domain.md,
      and .af/docs/conventions.md from your codebase.
+
+To auto-rebuild the USM bundles on every commit, run:
+
+  git config core.hooksPath .af/hooks
+
+This is opt-in — modifying your git config is intrusive, so install.sh
+will not do it for you.
 EOF

@@ -10,24 +10,26 @@
 
 ## Domain first, then backbone, then stories
 
-af is self-contained: there is no external tracker. All scope lives in the USM under `.af/docs/usm/`. New work flows top-down:
+af is self-contained: there is no external tracker. All scope lives in the USM under `.af/docs/usm/`. The single source of truth is per-item JSON under `.af/docs/usm/source/`; the bundled `.af/docs/usm/{data,specs,bugs}.js` are generated artifacts rebuilt by `.af/bin/build-usm.py`. New work flows top-down:
 
 1. **Domain** — `.af/docs/domain.md` must be populated (entities, business rules, glossary) before the backbone is meaningful. The Lead refuses to design a backbone over an empty `domain.md`.
-2. **Backbone** — Activities (the user's journey, left-to-right) and Steps (concrete actions inside each Activity) live in `.af/docs/usm/data.js`. Build or extend with `/af-create-backbone`.
-3. **Stories** — User Stories (Options) hang off Steps in the same `data.js`. Create with `/af-create-story`. Default `slice` is `null` (Backlog); the PM moves them into a slice when planning a release.
-4. **SPECs / Bugs** — written against a Story (or as cross-cutting work). Live as JSON in `.af/docs/usm/specs.js` and `.af/docs/usm/bugs.js`.
+2. **Backbone** — Activities (the user's journey, left-to-right) and Steps (concrete actions inside each Activity) live in `.af/docs/usm/source/skeleton.json`. Build or extend with `/af-create-backbone`.
+3. **Stories** — User Stories (Options) hang off Steps via their `step` field, one file per story under `.af/docs/usm/source/stories/`. Create with `/af-create-story`. Default `slice` is `null` (Backlog); the PM moves them into a slice when planning a release.
+4. **SPECs / Bugs** — written against a Story (or as cross-cutting work). Live as one file per item under `.af/docs/usm/source/specs/` and `.af/docs/usm/source/bugs/`.
 
 ## Flow
 
 ```
-PM: backbone exists? if not → /af-create-backbone
-PM: /af-create-story → US-#### proposed in data.js (slice: null)
-PM: /af-create-spec → Lead writes SPEC entry in specs.js → PM confirms → status: ready
+PM: backbone exists? if not → /af-create-backbone (writes source/skeleton.json)
+PM: /af-create-story → US-####.json proposed in source/stories/ (slice: null)
+PM: /af-create-spec → Lead writes SPEC-####.json in source/specs/ → PM confirms → status: ready
 Developer: /af-implement-spec → implements subtasks + tests → hands off test tree + run commands
 PM: review + run tests → status: approved
 Developer: create PR
 PM: approve PR → status: archived
 ```
+
+After every write under `source/`, `build-usm.py` regenerates the bundled `.js` files and `source/INDEX.md`. With the pre-commit hook enabled (`git config core.hooksPath .af/hooks`) the rebuild also happens automatically at commit time.
 
 ## Rules
 
@@ -41,7 +43,7 @@ PM: approve PR → status: archived
 ## Bug flow
 
 ```
-PM: /af-create-bug → Lead investigates root cause (targeted) → writes BUG entry in bugs.js → PM confirms → status: in-progress
+PM: /af-create-bug → Lead investigates root cause (targeted) → writes BUG-####.json in source/bugs/ → PM confirms → status: in-progress
 Developer: /af-fix-bug → applies fix + writes regression test → notifies PM
 PM: verify fix → ok to ship
 Developer: create PR
@@ -57,7 +59,7 @@ PM: approve PR → status: fixed
 If a defect surfaces while the Developer is implementing the US, decide where it belongs:
 
 - **In scope of the active SPEC** — an acceptance criterion is not yet met, or a subtask uncovered a small adjacent issue inside the same files. Fix it in the current SPEC, no new BUG entry.
-- **Out of scope of the active SPEC** — the defect is in files or behavior not listed in the SPEC, or in code that was already shipped. Stop, file a separate BUG entry in `bugs.js` (`status: open`, link `story` if it fits one), and continue with the original SPEC. The bug is triaged like any other afterwards.
+- **Out of scope of the active SPEC** — the defect is in files or behavior not listed in the SPEC, or in code that was already shipped. Stop, file a separate BUG entry as a new file in `.af/docs/usm/source/bugs/` (`status: open`, link `story` if it fits one), and continue with the original SPEC. The bug is triaged like any other afterwards.
 
 The rule: if you can address it without changing the SPEC's subtasks, it's in scope. If addressing it would require new subtasks or touch files the SPEC didn't list, it's a separate BUG.
 
@@ -65,18 +67,23 @@ The rule: if you can address it without changing the SPEC's subtasks, it's in sc
 
 The USM header surfaces two trays:
 
-- **🐞 N bugs abiertos** — counter of bugs with status `open` or `in-progress`. Click toggles a filter that hides every US without open bugs, so the map shows only where it hurts.
-- **📋 N sin asignar** — counter of (a) all SPECs with `status: "draft"`, (b) all bugs with `story: null` and (c) all SPECs with `story: null`. Click opens the side pane in tray mode, listing the groups with full detail. This is the Lead's review surface for unfinished or unattached work.
+- **🐞 N open bugs** — counter of bugs with status `open` or `in-progress`. Click toggles a filter that hides every US without open bugs, so the map shows only where it hurts.
+- **📋 N unassigned** — counter of (a) all SPECs with `status: "draft"`, (b) all bugs with `story: null` and (c) all SPECs with `story: null`. Click opens the side pane in tray mode, listing the groups with full detail. This is the Lead's review surface for unfinished or unattached work.
 
-A SPEC may legitimately have `story: null` for cross-cutting work (infrastructure, refactor, CI). Such SPECs are not pinned to a US in the map, but the Developer can still implement them by ID — they live in `specs.js` like any other. Drafts always show up in the tray regardless of whether they have a `story`, as a reminder for the Lead to finish them.
+A SPEC may legitimately have `story: null` for cross-cutting work (infrastructure, refactor, CI). Such SPECs are not pinned to a US in the map, but the Developer can still implement them by ID — they live under `source/specs/` like any other. Drafts always show up in the tray regardless of whether they have a `story`, as a reminder for the Lead to finish them.
 
 ## Artifact location and naming
 
-Everything af tracks lives under `.af/docs/usm/`:
+Everything af tracks lives under `.af/docs/usm/source/` (the single source of truth):
 
-- Backbone + Stories: `.af/docs/usm/data.js` (`window.USM_DATA`)
-- SPECs: `.af/docs/usm/specs.js` (`window.USM_SPECS`)
-- Bugs:  `.af/docs/usm/bugs.js`  (`window.USM_BUGS`)
+- Backbone: `.af/docs/usm/source/skeleton.json` — Activities + Steps, no stories.
+- Stories: `.af/docs/usm/source/stories/US-XXXX.json` — one file per story, carries its `step` field to nest under the backbone at build time.
+- Releases (slices): `.af/docs/usm/source/releases/<slice-id>.json`.
+- SPECs: `.af/docs/usm/source/specs/SPEC-XXXX.json`.
+- Bugs:  `.af/docs/usm/source/bugs/BUG-XXXX.json`.
+- Catalogue: `.af/docs/usm/source/INDEX.md` — grep-friendly listing of all stories, SPECs and bugs with id, title and status.
+
+The bundled `.af/docs/usm/{data,specs,bugs}.js` are generated artifacts produced by `.af/bin/build-usm.py` for the static HTML viewer to read. Never hand-edit them.
 
 IDs are zero-padded and unique across history:
 
@@ -84,7 +91,7 @@ IDs are zero-padded and unique across history:
 - Features:    `SPEC-####`
 - Bugs:        `BUG-####`
 
-The next number is one above the highest ID currently present in the file — including archived/fixed entries, which stay in the JSON as a record.
+The next number is one above the highest ID currently listed in `source/INDEX.md` — including archived/fixed entries, which stay in `source/` as a record.
 
 Each SPEC or BUG links to a User Story via the `story` field (e.g. `"story": "US-0001"`). A story can have many SPECs and many bugs.
 
@@ -112,11 +119,11 @@ Schema reference: `.af/docs/usm.md`.
 
 Each command does one phase of the workflow and stops. The agent does not auto-progress to the next phase — if the PM wants to move on, they start a new session with the next command.
 
-- `/af-create-backbone` defines or extends Activities + Steps in `data.js`. Requires `domain.md` populated. It does not create Stories.
-- `/af-create-story` files a new US under an existing Step (and may add a Step inline if needed). It does not write SPECs.
-- `/af-create-spec` writes a SPEC entry in `specs.js`. It does not implement.
-- `/af-create-bug` writes a BUG entry in `bugs.js`. It does not fix.
-- `/af-implement-spec` implements a `ready` SPEC from `specs.js`. It does not pick up another SPEC.
-- `/af-fix-bug` fixes an `in-progress` (or `open`, after confirmation) BUG from `bugs.js` and writes a regression test. It does not pick up another BUG.
+- `/af-create-backbone` defines or extends Activities + Steps in `source/skeleton.json`. Requires `domain.md` populated. It does not create Stories.
+- `/af-create-story` files a new US under an existing Step (and may add a Step inline if needed) as a new file in `source/stories/`. It does not write SPECs.
+- `/af-create-spec` writes a SPEC as a new file in `source/specs/`. It does not implement.
+- `/af-create-bug` writes a BUG as a new file in `source/bugs/`. It does not fix.
+- `/af-implement-spec` implements a `ready` SPEC from `source/specs/`. It does not pick up another SPEC.
+- `/af-fix-bug` fixes an `in-progress` (or `open`, after confirmation) BUG from `source/bugs/` and writes a regression test. It does not pick up another BUG.
 
 Keep sessions focused on a single phase. This keeps scope and review boundaries crisp.

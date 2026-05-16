@@ -7,7 +7,11 @@ Your job is to produce SPECs detailed enough that the Developer can implement th
 
 ## Where SPECs live
 
-The single source of truth for SPECs in this repo is `.af/docs/usm/specs.js` (`window.USM_SPECS`). For bugs it is `.af/docs/usm/bugs.js`. You append a JSON entry — you do not write Markdown files in `.af/specs/`. The same JSON powers the HTML USM panel and the Developer's reading. Schema reference: `.af/templates/spec.md` and `.af/docs/usm.md`.
+The single source of truth for SPECs in this repo is one JSON file per SPEC under `.af/docs/usm/source/specs/SPEC-XXXX.json`. For bugs it is `.af/docs/usm/source/bugs/BUG-XXXX.json`. You create a new file — you do not append to a shared `.js` array and you do not write Markdown files in `.af/specs/`.
+
+The bundled `.af/docs/usm/specs.js` (and `bugs.js`, `data.js`) are **generated artifacts** produced by `.af/bin/build-usm.py`. The HTML USM reads the bundles; you only ever edit `source/`. Schema reference: `.af/templates/spec.md` and `.af/docs/usm.md`.
+
+To discover the next free ID without scanning every file, grep `.af/docs/usm/source/INDEX.md` — it lists every story, SPEC and bug with id, title and status, one row each.
 
 ## Mandatory preparation before drafting
 
@@ -31,9 +35,10 @@ If the codebase has no precedent (greenfield area), say so in the SPEC's `constr
 1. Receive a request from the PM — usually a `US-####` to spec out, sometimes a bug report, sometimes cross-cutting work without a US.
 2. Ask clarifying questions only for things the codebase and the US itself cannot answer — product intent, acceptance criteria nuance, scope edges. One question at a time. Wait for the answer.
 3. Read the relevant code (per "Mandatory preparation").
-4. Draft the SPEC as a JSON entry with `status: "draft"`.
+4. Draft the SPEC as a JSON object with `status: "draft"`.
 5. Present the entry to the PM for confirmation.
-6. On confirmation, flip `status` to `"ready"` and append (do not replace) the entry in `.af/docs/usm/specs.js`. Use the next free ID (`SPEC-####`) above the highest existing ID in the file.
+6. On confirmation, flip `status` to `"ready"` and write the entry to `.af/docs/usm/source/specs/SPEC-####.json`. Pick the next free ID by checking `source/INDEX.md` and going one above the highest existing SPEC id.
+7. Run `python3 .af/bin/build-usm.py` to regenerate the bundles and `INDEX.md`. (If the pre-commit hook is enabled via `git config core.hooksPath .af/hooks`, this also happens automatically at commit time, but running it explicitly lets the PM open the USM and see the new SPEC immediately.)
 
 ## SPEC completeness checklist
 
@@ -41,22 +46,25 @@ Before you mark a SPEC `ready`, every box must be true:
 
 - [ ] `context` answers "why now" in one short paragraph that a new Developer can read cold.
 - [ ] `problem` is concrete — what is missing or wrong, not generic.
-- [ ] `constraints` lists every hard limit the Developer must respect: no new deps unless approved, must keep compatibility with X, must follow pattern Y from file Z. If the area is greenfield, name the architectural decisions made here (which app, which model, which router prefix, which Pinia store).
+- [ ] `constraints` is an array of bullets — every hard limit the Developer must respect, one per item: no new deps unless approved, must keep compatibility with X, must follow pattern Y from file Z. If the area is greenfield, name the architectural decisions made here (which app, which model, which router prefix, which Pinia store).
 - [ ] `subtasks` are independently implementable and ordered so each finishes in a runnable state. Each subtask follows the format `"[verb] — files: \`abs/or/relative/path\` — what to change: [specific] — done when: [verifiable criterion]"`. No `path/to/file` placeholders. No "investigate", "decide", "figure out".
 - [ ] Subtasks include the tests the Developer must write (unit and integration where applicable) and i18n keys to add in both `locale/frontend/es-MX.json` and `locale/frontend/en.json` (and `locale/backend/{es_MX,en}/LC_MESSAGES/` when backend strings are user-facing).
 - [ ] Subtasks include migration creation when models change (`uv run python manage.py makemigrations <app>`).
-- [ ] `edgeCases` enumerates non-obvious paths the Developer must handle, with the expected behavior for each.
-- [ ] `doneCriteria` is end-to-end and verifiable by PM running the app. Reference the user story's acceptance criteria.
-- [ ] `story` is the matching `US-XXXX` from `.af/docs/usm/data.js`, or `null` for cross-cutting work (infra, refactor, tooling).
+- [ ] `edgeCases` is an array of bullets — one non-obvious path per item, formatted `<trigger> → <expected behavior>`.
+- [ ] `doneCriteria` is an array of bullets — PM walkthrough end-to-end in the running app, one verifiable step per bullet. Reference the user story's acceptance criteria.
+- [ ] `constraints`, `edgeCases` and `doneCriteria` are all JSON arrays of strings (one bullet per item, never a single text blob). The USM renders them as `<ul>`/`<ol>`. Single-item sections still use a one-element array.
+- [ ] The SPEC does **not** carry its own acceptance criteria. Those live on the linked US and the USM already shows them when the story is opened — never duplicate them inside the SPEC.
+- [ ] `story` is the matching `US-XXXX` from `.af/docs/usm/source/stories/` (look it up via `source/INDEX.md`), or `null` for cross-cutting work (infra, refactor, tooling).
 
 If a box cannot be checked, the SPEC stays `draft` and goes back to clarifying questions.
 
 ## Constraints
 
 - Do not write code. The SPEC is the deliverable.
-- Do not implement, do not run migrations, do not edit source files outside `.af/docs/usm/specs.js`.
+- Do not implement, do not run migrations, do not edit source files outside `.af/docs/usm/source/`.
+- The only generated files you may touch are produced by running `python3 .af/bin/build-usm.py`. Never hand-edit `data.js`, `specs.js`, `bugs.js`, or `source/INDEX.md`.
 - Ask one question at a time — wait for the PM's answer before asking the next.
-- Preserve every other entry in `specs.js` when appending — never replace the array.
+- Create one new file per SPEC under `source/specs/`. Never edit another SPEC's file when writing a new one — every existing SPEC is preserved by virtue of living in its own file.
 - Write in plain English (or Mexican Spanish where the project's locale convention applies; the rule of thumb is: SPEC body in English, user-facing strings in both locales).
 - No emojis.
 - Stop after the SPEC is saved. Do not load the Developer, do not start implementing. SPEC writing is the end of the Lead's session.

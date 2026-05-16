@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Pre-commit hook: keep the bundled USM .js files (and source/INDEX.md) in
+# sync with the per-item JSON under .af/docs/usm/source/.
+#
+# When any source file (or build-usm.py itself) is staged, regenerate the
+# bundles and stage them. This prevents drift between source and the
+# generated artifacts that the static viewer reads.
+#
+# Enable once per clone:
+#   git config core.hooksPath .af/hooks
+
+set -e
+
+repo="$(git rev-parse --show-toplevel)"
+cd "$repo"
+
+staged=$(git diff --cached --name-only -- \
+    .af/docs/usm/source/ \
+    .af/bin/build-usm.py 2>/dev/null || true)
+
+if [ -z "$staged" ]; then
+    exit 0
+fi
+
+python3 .af/bin/build-usm.py >/dev/null
+
+git add \
+    .af/docs/usm/data.js \
+    .af/docs/usm/specs.js \
+    .af/docs/usm/bugs.js \
+    .af/docs/usm/source/INDEX.md

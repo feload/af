@@ -7,15 +7,14 @@
 #                                                  # fetching the version into
 #                                                  # ~/.af/v0.5.0/ if not cached.
 #
-# Overwrites framework files only — agents/, templates/, docs/workflow.md,
-# docs/usm.md, docs/usm/index.html, docs/usm/styles.css, bin/.
-# Bumps .af/VERSION to the target on success.
+# Overwrites framework files (agents/, templates/, docs/workflow.md, docs/usm.md,
+# docs/usm/index.html, docs/usm/styles.css, bin/, hooks/) and regenerates the
+# bundled USM .js files from .af/docs/usm/source/. Bumps .af/VERSION on success.
 #
-# Does NOT touch: .af/docs/usm/data.js, .af/docs/usm/specs.js,
-# .af/docs/usm/bugs.js (project-owned USM data), .af/docs/architecture.md,
-# .af/docs/domain.md, .af/docs/conventions.md, AGENTS.md, CLAUDE.md.
-# The /af-update slash command handles host-populated docs interactively
-# after this script returns.
+# Does NOT touch: anything under .af/docs/usm/source/ (host-populated USM
+# data), .af/docs/architecture.md, .af/docs/domain.md, .af/docs/conventions.md,
+# AGENTS.md, CLAUDE.md. The /af-update slash command handles host-populated
+# docs interactively after this script returns.
 
 set -eu
 
@@ -58,7 +57,7 @@ fetch_version() {
         mkdir -p "$(dirname "$dst")"
         curl -fsSL "${RAW_BASE}/${TARGET}/${src}" -o "$dst" \
             || err "could not fetch ${src} for ${TARGET}"
-        case "$src" in bin/*) chmod +x "$dst" ;; esac
+        case "$src" in bin/*|hooks/*) chmod +x "$dst" ;; esac
     done < "$TMP"
 
     cp "$TMP" "${CACHE}/MANIFEST"
@@ -87,17 +86,62 @@ overwrite() {
     printf "  write  %s\n" "$dst"
 }
 
-overwrite "agents/lead.md"           ".af/agents/lead.md"
-overwrite "agents/developer.md"      ".af/agents/developer.md"
-overwrite "templates/spec.md"        ".af/templates/spec.md"
-overwrite "templates/bug.md"         ".af/templates/bug.md"
-overwrite "docs/workflow.md"         ".af/docs/workflow.md"
-overwrite "docs/usm.md"              ".af/docs/usm.md"
-overwrite "docs/usm/index.html"      ".af/docs/usm/index.html"
-overwrite "docs/usm/styles.css"      ".af/docs/usm/styles.css"
-overwrite "bin/bootstrap-here.sh"    ".af/bin/bootstrap-here.sh"
-overwrite "bin/update-here.sh"       ".af/bin/update-here.sh"
-chmod +x .af/bin/bootstrap-here.sh .af/bin/update-here.sh
+overwrite "agents/lead.md"                    ".af/agents/lead.md"
+overwrite "agents/developer.md"               ".af/agents/developer.md"
+overwrite "templates/spec.md"                 ".af/templates/spec.md"
+overwrite "templates/bug.md"                  ".af/templates/bug.md"
+overwrite "docs/workflow.md"                  ".af/docs/workflow.md"
+overwrite "docs/usm.md"                       ".af/docs/usm.md"
+overwrite "docs/usm/index.html"               ".af/docs/usm/index.html"
+overwrite "docs/usm/styles.css"               ".af/docs/usm/styles.css"
+overwrite "bin/bootstrap-here.sh"             ".af/bin/bootstrap-here.sh"
+overwrite "bin/update-here.sh"                ".af/bin/update-here.sh"
+overwrite "bin/build-usm.py"                  ".af/bin/build-usm.py"
+overwrite "bin/migrate-data-to-source.py"     ".af/bin/migrate-data-to-source.py"
+overwrite "bin/migrate-specs-bugs-to-source.py" ".af/bin/migrate-specs-bugs-to-source.py"
+overwrite "hooks/pre-commit"                  ".af/hooks/pre-commit"
+chmod +x .af/bin/bootstrap-here.sh .af/bin/update-here.sh \
+         .af/bin/build-usm.py .af/bin/migrate-data-to-source.py \
+         .af/bin/migrate-specs-bugs-to-source.py \
+         .af/hooks/pre-commit
+
+# Detect pre-source hosts (have data.js but no source/) and run the migrators.
+PRE_SOURCE=0
+if [ -f .af/docs/usm/data.js ] && [ ! -d .af/docs/usm/source ]; then
+    PRE_SOURCE=1
+    printf "\nDetected pre-source layout (data.js exists, source/ does not).\n"
+    printf "Running migrators to split bundles into per-item JSON under source/...\n"
+    if ! command -v python3 >/dev/null 2>&1; then
+        cat <<EOF
+
+  python3 is required to run the migrators but was not found.
+  After installing python3, run by hand:
+
+    python3 .af/bin/migrate-data-to-source.py
+    python3 .af/bin/migrate-specs-bugs-to-source.py
+    python3 .af/bin/build-usm.py
+
+EOF
+    else
+        python3 .af/bin/migrate-data-to-source.py \
+            || err "migrate-data-to-source.py failed — see output above and re-run manually"
+        if [ -f .af/docs/usm/specs.js ] || [ -f .af/docs/usm/bugs.js ]; then
+            python3 .af/bin/migrate-specs-bugs-to-source.py \
+                || err "migrate-specs-bugs-to-source.py failed — see output above and re-run manually"
+        fi
+    fi
+fi
+
+# Regenerate the bundles so they match the new build script's output.
+if command -v python3 >/dev/null 2>&1; then
+    if [ -d .af/docs/usm/source ]; then
+        python3 .af/bin/build-usm.py >/dev/null 2>&1 || \
+            printf "  warn   build-usm.py failed — run it manually\n"
+        printf "  build  .af/docs/usm/{data,specs,bugs}.js + source/INDEX.md\n"
+    fi
+else
+    printf "  warn   python3 not found — run python3 .af/bin/build-usm.py before opening the USM\n"
+fi
 
 printf "%s\n" "$TARGET" > .af/VERSION
 printf "  write  .af/VERSION (%s)\n" "$TARGET"
@@ -110,12 +154,27 @@ These host-populated files were NOT touched:
   .af/docs/architecture.md
   .af/docs/domain.md
   .af/docs/conventions.md
-  .af/docs/usm/data.js
-  .af/docs/usm/specs.js
-  .af/docs/usm/bugs.js
+  .af/docs/usm/source/   (per-item JSON: stories, releases, specs, bugs, skeleton)
 
-The /af-update slash command will diff the three docs against ${TARGET}'s
-placeholder and ask whether to keep yours, take the new placeholder, or
-merge manually. The USM data files (data.js, specs.js, bugs.js) are
-project-owned and never overwritten.
+The bundled .af/docs/usm/{data,specs,bugs}.js were regenerated from
+source/ — they are artifacts, not data.
+EOF
+
+if [ "$PRE_SOURCE" = "1" ]; then
+    cat <<EOF
+
+This host used the pre-source layout (single data.js/specs.js/bugs.js).
+The migrators split those files into per-item JSON under
+.af/docs/usm/source/. Review the new layout, commit, and consider
+enabling the pre-commit hook to keep bundles in sync:
+
+  git config core.hooksPath .af/hooks
+EOF
+fi
+
+cat <<EOF
+
+The /af-update slash command will diff the three host docs against
+${TARGET}'s placeholder and ask whether to keep yours, take the new
+placeholder, or merge manually.
 EOF

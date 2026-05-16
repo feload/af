@@ -1,17 +1,20 @@
-# SPEC schema (entry in `.af/docs/usm/specs.js`)
+# SPEC schema (one file per SPEC under `.af/docs/usm/source/specs/`)
 
-A SPEC is a JSON object inside the `window.USM_SPECS` array. The Lead appends one per feature. The Developer reads from here. Full reading rules: `.af/agents/lead.md`. Full schema docs: `.af/docs/usm.md`.
+A SPEC is a JSON object stored in its own file at `.af/docs/usm/source/specs/SPEC-XXXX.json`. The Lead creates one new file per feature. The Developer reads from there. The bundled `.af/docs/usm/specs.js` is a generated artifact rebuilt by `.af/bin/build-usm.py` — never hand-edit it. Full reading rules: `.af/agents/lead.md`. Full schema docs: `.af/docs/usm.md`.
 
 ```js
 {
   "id": "SPEC-0001",            // SPEC-####, zero-padded, unique across all entries (archived ones count)
   "title": "Short feature name",
   "status": "draft",            // draft | ready | approved | archived
-  "story": "US-0001",           // Matches an id from data.js — OPTIONAL: null/missing for cross-cutting work (infra, refactor, CI) that doesn't map to a user-visible US
+  "story": "US-0001",           // Matches a story id from .af/docs/usm/source/stories/ (look it up in source/INDEX.md) — OPTIONAL: null/missing for cross-cutting work (infra, refactor, CI) that doesn't map to a user-visible US
 
   "context": "Why this is being built. One short paragraph readable cold by a Developer who has never seen this product.",
   "problem": "What is missing or broken today. Concrete — not a generic restatement of the user story.",
-  "constraints": "Hard limits and architectural decisions made in this SPEC. List them: no new deps, must keep X compatible, follow pattern Y from file Z, new Django app named `careers`, new Pinia store at `frontend/src/stores/careers.ts`, etc.",
+  "constraints": [
+    "One bullet per hard limit or architectural decision. Each item is one short sentence.",
+    "Examples: `no new deps`, `must keep X compatible`, `follow pattern Y from file Z`, `new Django app named careers`, `new Pinia store at frontend/src/stores/careers.ts`."
+  ],
 
   "subtasks": [
     {
@@ -24,8 +27,15 @@ A SPEC is a JSON object inside the `window.USM_SPECS` array. The Lead appends on
     }
   ],
 
-  "edgeCases": "Enumerate non-obvious paths the Developer must handle, each with the expected behavior. E.g.: if the user uploads a PDF over 10 MB, return 413 with key `cv.errors.too_large` in both locales.",
-  "doneCriteria": "How PM verifies end-to-end in the running app. Reference the acceptance criteria of the linked US."
+  "edgeCases": [
+    "One bullet per non-obvious path. Format: `<trigger> → <expected behavior>`.",
+    "Example: `PDF over 10 MB → return 413 with key cv.errors.too_large in both locales`."
+  ],
+  "doneCriteria": [
+    "Bulleted PM walkthrough of the running app. Each bullet is one verifiable step or check.",
+    "Example: `PM logs in, navigates to /profile/import, selects a 1 MB PDF, sees \"processed\" status`.",
+    "Reference the acceptance criteria of the linked US."
+  ]
 }
 ```
 
@@ -54,7 +64,9 @@ Forbidden subtask verbs: `Investigate`, `Decide`, `Explore`, `Consider`, `Figure
 ## Rules
 
 - Every field except `edgeCases` must be filled before `ready`.
-- `story` is optional. Leave `null` for cross-cutting work; drafts without `story` are surfaced in the "Sin asignar" tray of the USM header.
+- `story` is optional. Leave `null` for cross-cutting work; drafts without `story` are surfaced in the "Unassigned" tray of the USM header.
+- The SPEC does **not** carry acceptance criteria — those live on the linked US (`acceptance` array in `.af/docs/usm/source/stories/US-XXXX.json`) and the USM already shows them when the user opens the story. The SPEC's `doneCriteria` is the PM walkthrough that proves those criteria are satisfied end-to-end.
+- `constraints`, `edgeCases` and `doneCriteria` are arrays of strings. One bullet per item, each item one short sentence ending with a period. Never a single text blob — the USM renders these as `<ul>`/`<ol>`. If a section truly has only one item, still wrap it in an array of one.
 - Subtasks must include the tests the Developer must write and the i18n keys to add (when there is user-facing text).
 - Subtasks must include the migration creation step whenever models change.
 - Keep subtasks independently implementable and ordered so each finishes in a runnable state.

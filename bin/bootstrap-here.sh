@@ -3,8 +3,9 @@
 #
 # Reads the active version from ~/.af/current, then copies the cached
 # framework files from ~/.af/<version>/ into ./.af/. Existing files are
-# never overwritten. SPECs and bugs live as JSON entries in
-# .af/docs/usm/specs.js and .af/docs/usm/bugs.js — not as .md files.
+# never overwritten. SPECs and bugs live as per-item JSON files under
+# .af/docs/usm/source/{specs,bugs}/ — the bundled .js files are generated
+# artifacts produced by .af/bin/build-usm.py.
 #
 # Invoked by /af-init when ./.af/VERSION is missing. Can also be run
 # directly: sh ~/.af/current-dir/bin/bootstrap-here.sh
@@ -60,41 +61,29 @@ copy_file "docs/conventions.md"      ".af/docs/conventions.md"
 copy_file "docs/usm.md"              ".af/docs/usm.md"
 copy_file "docs/usm/index.html"      ".af/docs/usm/index.html"
 copy_file "docs/usm/styles.css"      ".af/docs/usm/styles.css"
+copy_file "bin/build-usm.py"         ".af/bin/build-usm.py"
+copy_file "hooks/pre-commit"         ".af/hooks/pre-commit"
+chmod +x .af/bin/build-usm.py .af/hooks/pre-commit 2>/dev/null || true
 
-if write_inline ".af/docs/usm/data.js"; then
-    cat > .af/docs/usm/data.js <<'DATA_EOF'
-window.USM_DATA = {
-  "slices": [],
+if write_inline ".af/docs/usm/source/skeleton.json"; then
+    cat > .af/docs/usm/source/skeleton.json <<'SKELETON_EOF'
+{
   "activities": []
-};
-DATA_EOF
-    printf "  write  .af/docs/usm/data.js\n"
+}
+SKELETON_EOF
+    printf "  write  .af/docs/usm/source/skeleton.json\n"
 fi
 
-if write_inline ".af/docs/usm/specs.js"; then
-    cat > .af/docs/usm/specs.js <<'SPECS_EOF'
-// SPECs ligados (o no) a historias del USM. Cuando aplica, cada SPEC se
-// liga a una historia por `story` (ID del US). Si es trabajo transversal
-// (infra, refactor, CI) `story` puede ser null/omitirse. Es la fuente
-// única de verdad de los SPECs en este repo: el Lead escribe aquí (no en
-// .md). El Developer lee de aquí. Los drafts (con o sin story) aparecen
-// en la bandeja "Sin asignar" del header del USM.
-window.USM_SPECS = [];
-SPECS_EOF
-    printf "  write  .af/docs/usm/specs.js\n"
-fi
-
-if write_inline ".af/docs/usm/bugs.js"; then
-    cat > .af/docs/usm/bugs.js <<'BUGS_EOF'
-// Bugs ligados (cuando aplica) a historias del USM. Cada bug se liga a
-// una historia por `story` (ID del US). `story` puede ser null para bugs
-// huérfanos (raro; usualmente infra) — esos aparecen en la bandeja "Sin
-// asignar" del header del USM. Es la fuente única de verdad de los bugs:
-// el Lead escribe aquí (no en .md). El Developer lee de aquí.
-window.USM_BUGS = [];
-BUGS_EOF
-    printf "  write  .af/docs/usm/bugs.js\n"
-fi
+for dir in releases stories specs bugs; do
+    keep=".af/docs/usm/source/${dir}/.gitkeep"
+    if [ ! -e "$keep" ]; then
+        mkdir -p ".af/docs/usm/source/${dir}"
+        : > "$keep"
+        printf "  write  %s\n" "$keep"
+    else
+        printf "  skip   %s (exists)\n" "$keep"
+    fi
+done
 
 if [ ! -f .af/VERSION ]; then
     printf "%s\n" "$VERSION" > .af/VERSION
@@ -112,16 +101,27 @@ This project uses the **af** AI-assisted development framework.
 ## Workflow
 
 - The PM (you) shapes the USM backbone via `/af-create-backbone`
-  (Activities + Steps under `.af/docs/usm/data.js`) and files stories
-  under those Steps via `/af-create-story`.
+  (Activities + Steps under `.af/docs/usm/source/skeleton.json`) and
+  files stories under those Steps via `/af-create-story` (one file per
+  story under `.af/docs/usm/source/stories/`).
 - The PM hands a story to the Lead via `/af-create-spec`, or reports a
   bug via `/af-create-bug`.
-- The Lead writes a SPEC as a JSON entry in `.af/docs/usm/specs.js`
-  (or in `.af/docs/usm/bugs.js` for bugs). PM confirms.
+- The Lead writes one JSON file per SPEC under
+  `.af/docs/usm/source/specs/SPEC-XXXX.json` (or
+  `.af/docs/usm/source/bugs/BUG-XXXX.json` for bugs). PM confirms.
 - The Developer implements via `/af-implement-spec` or `/af-fix-bug`,
-  reading the SPEC entry directly from the JSON.
+  reading the SPEC file directly from `source/`.
 - PM approves; PR is opened; SPEC `status` flips to `archived` (or bug
   `status` to `fixed`) in the same JSON file.
+
+The bundled `.af/docs/usm/{data,specs,bugs}.js` are **generated
+artifacts** — never hand-edit them. Run
+`python3 .af/bin/build-usm.py` after editing anything under `source/`,
+or enable the pre-commit hook to do it automatically:
+
+```
+git config core.hooksPath .af/hooks
+```
 
 Full rules: `.af/docs/workflow.md`. Role definitions: `.af/agents/`.
 
@@ -133,18 +133,18 @@ Run `/af-init` in Claude Code to populate `.af/docs/architecture.md`,
 ## User Story Map, SPECs and BUGs
 
 The visual map of activities, steps, stories, releases, SPECs and bugs
-lives under `.af/docs/usm/` as a static HTML site. SPECs and bugs are
-also the canonical source of work — the Lead writes JSON entries in
-`specs.js` / `bugs.js` and the Developer reads them from there. Open
+lives under `.af/docs/usm/` as a static HTML site. The single source of
+truth is `.af/docs/usm/source/` (per-item JSON). Open
 `.af/docs/usm/index.html` to view. See `.af/docs/usm.md` for the full
 data schema.
 
 ## Updating
 
-Re-run `install.sh` to refresh the global cache, then `/af-update` in this
-repo to bring `.af/` to that version. `/af-update v0.X.0` targets a specific
-version. Host-populated docs and the USM data (data.js, specs.js, bugs.js)
-are preserved.
+Re-run `install.sh` to refresh the global cache, then `/af-update` in
+this repo to bring `.af/` to that version. `/af-update v0.X.0` targets
+a specific version. Host-populated docs and everything under
+`.af/docs/usm/source/` are preserved; the bundled `.js` files are
+regenerated.
 AGENTS_EOF
     printf "  write  AGENTS.md\n"
 else
@@ -158,4 +158,24 @@ else
     printf "  skip   CLAUDE.md (exists)\n"
 fi
 
-printf "\nDone. af %s bootstrapped into %s.\n" "$VERSION" "$(pwd)"
+# Generate the bundled .js files so the static viewer has something to read.
+if command -v python3 >/dev/null 2>&1; then
+    python3 .af/bin/build-usm.py >/dev/null 2>&1 || \
+        printf "  warn   build-usm.py failed — run it manually before opening the USM\n"
+    printf "  build  .af/docs/usm/{data,specs,bugs}.js + source/INDEX.md\n"
+else
+    printf "  warn   python3 not found — run python3 .af/bin/build-usm.py before opening the USM\n"
+fi
+
+cat <<EOF
+
+Done. af ${VERSION} bootstrapped into $(pwd).
+
+To auto-rebuild the USM bundles on every commit (recommended), run:
+
+  git config core.hooksPath .af/hooks
+
+This is not done automatically because modifying your git config is
+intrusive. Skip it and run \`python3 .af/bin/build-usm.py\` by hand
+after editing files under \`.af/docs/usm/source/\` instead.
+EOF

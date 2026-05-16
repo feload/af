@@ -1,211 +1,258 @@
 # User Story Map (USM)
 
-Mapa visual del producto Fredo. Vive como sitio estático en este repo;
-no requiere servidor ni dependencias. Además del mapa de historias,
-contiene los **SPECs** y **BUGs** como fuente única de verdad — el Lead
-los escribe aquí (no en `.md`) y el Developer los lee directo del JSON.
+Visual map of the product. Lives as a static site in this repo; needs no
+server or dependencies. Besides the story map, it holds the **SPECs**
+and **BUGs** as the single source of truth — the Lead writes them here
+(not in `.md` files) and the Developer reads them straight from the JSON.
 
-## Ubicación
+## Location
 
 `.af/docs/usm/`
 
 ```
 .af/docs/usm/
-├── index.html   # El mapa interactivo
-├── data.js      # Historias, pasos, actividades, slices (window.USM_DATA)
-├── specs.js     # SPECs ligados a historias (window.USM_SPECS)
-├── bugs.js      # Bugs ligados a historias (window.USM_BUGS)
-└── styles.css   # Estilos (incluye soporte para tema claro y oscuro)
+├── index.html         # The interactive map
+├── styles.css         # Styles (light and dark theme)
+├── data.js            # GENERATED — do not hand-edit (window.USM_DATA)
+├── specs.js           # GENERATED — do not hand-edit (window.USM_SPECS)
+├── bugs.js            # GENERATED — do not hand-edit (window.USM_BUGS)
+└── source/            # Single source of truth — edit these files
+    ├── INDEX.md       # Grep-friendly catalogue (stories, SPECs, bugs)
+    ├── skeleton.json  # Activities + steps (no stories)
+    ├── releases/      # One file per slice: <slice-id>.json
+    ├── stories/       # One file per story: US-XXXX.json
+    ├── specs/         # One file per SPEC: SPEC-XXXX.json
+    └── bugs/          # One file per bug: BUG-XXXX.json
 ```
 
-## Cómo verlo
+The bundled `.js` files are **generated artifacts** produced by
+`.af/bin/build-usm.py`. The HTML viewer reads them because the USM is a
+static site (no server, no `fetch()`). Authors edit the per-item JSON
+under `source/`.
 
-- **Doble clic** sobre `index.html` — abre en el navegador.
-- En distribuciones donde el navegador (Brave/Chrome) corre en sandbox
-  Flatpak/Snap y no ve `.af/` (oculto), usar Firefox nativo:
+## Build and pre-commit hook
+
+After editing anything under `source/`, regenerate the bundles:
+
+```bash
+python3 .af/bin/build-usm.py
+```
+
+This rewrites `data.js`, `specs.js`, `bugs.js` and `source/INDEX.md`
+from the per-item files. It is idempotent and fast — skips a bundle if
+its `source/<dir>/` doesn't exist yet (so adoption can be gradual).
+
+A pre-commit hook does the same automatically: when any file under
+`source/` (or `bin/build-usm.py` itself) is staged, it regenerates the
+bundles and `git add`s them so they never drift. Enable once per clone:
+
+```bash
+git config core.hooksPath .af/hooks
+```
+
+This is opt-in — `/af-init` and `/af-update` print the hint but never
+touch the user's git config.
+
+## How to view it
+
+- **Double-click** `index.html` — opens in the browser.
+- On distros where the browser (Brave/Chrome) runs in a Flatpak/Snap
+  sandbox and can't see `.af/` (hidden), use native Firefox:
   ```bash
   firefox .af/docs/usm/index.html
   ```
-- O servir desde un servidor local:
+- Or serve it from a local server:
   ```bash
   python3 -m http.server 8000 --directory .af/docs/usm
   ```
 
-## Cómo se organiza el USM
+## How the USM is organized
 
-Estructura Patton-style:
+Patton-style structure:
 
-- **Actividades** (fila horizontal arriba) — el recorrido del usuario por
-  el producto, de izquierda a derecha. Sticky al hacer scroll vertical.
-- **Pasos** (fila horizontal debajo de cada actividad) — las acciones
-  concretas que el usuario realiza dentro de cada actividad. También
-  sticky.
-- **Historias** (columnas verticales bajo cada paso) — las opciones o
-  variantes de cómo el usuario hace ese paso.
+- **Activities** (top horizontal row) — the user's journey through the
+  product, left to right. Sticky on vertical scroll.
+- **Steps** (horizontal row under each activity) — the concrete actions
+  the user takes inside each activity. Also sticky.
+- **Stories** (vertical columns under each step) — the options or
+  variants of how the user performs that step.
 
-Las historias se agrupan en **bandas horizontales** por versión
-(slice). El orden vertical de las bandas: arriba los slices no
-liberados (`planning` + `in-progress`, en orden de planeación), después
-las versiones liberadas (la más reciente primero), y al final el
-Backlog (historias sin slice asignado). El chip de cada banda muestra
-el status del release como sufijo: "Versión v1.0 · en planeación",
-"Versión v1.1 · en desarrollo", "Versión MVP · liberada".
+Stories are grouped into **horizontal bands** by version (slice).
+Vertical band order: unreleased slices on top (`planning` +
+`in-progress`, in planning order), then released versions (most recent
+first), and at the bottom the Backlog (stories with no slice assigned).
+Each band's chip shows the release status as a suffix: "Version v1.0 ·
+planning", "Version v1.1 · in development", "Version MVP · released".
 
-## Estado e interacción
+## State and interaction
 
-- Click en una historia → abre panel lateral derecho con narrativa,
-  rationale, criterios de aceptación, tareas, **SPECs relacionados** y
-  **bugs relacionados** (cada uno con todo el detalle del template,
-  colapsable). La URL queda en `#US-XXXX` para que refrescar o
-  compartir reabra la misma historia.
-- Click en el chip de una banda → colapsa o expande sus historias.
-- Hover sobre un paso o cualquier celda de su columna → resalta toda
-  la columna con una franja de color.
-- Drag horizontal sobre el mapa → scroll horizontal estilo Miro.
-- Scroll vertical normal para recorrer las bandas.
+- Click a story → opens the right-side panel with narrative, rationale,
+  acceptance criteria, tasks, **related SPECs** and **related bugs**
+  (each with the full template detail, collapsible). The URL becomes
+  `#US-XXXX` so refreshing or sharing reopens the same story.
+- Click a band's chip → collapses or expands its stories.
+- Hover a step or any cell in its column → highlights the entire column
+  with a colored band.
+- Horizontal drag on the map → horizontal scroll, Miro-style.
+- Normal vertical scroll to traverse the bands.
 
-## Señales visuales
+## Visual signals
 
-Indicadores que ayudan al PM a leer el estado del mapa sin abrir cada
-historia:
+Indicators that help the PM read the map's state without opening each
+story:
 
-- **Insignia 🐞N en la tarjeta de la US** — aparece cuando esa US tiene
-  bugs en `open` o `in-progress`. La cuenta es agregada de bugs vivos
-  de esa US.
-- **US liberada con bugs no se atenúa** — las US en bandas liberadas
-  normalmente se ven tenues (ya cumplieron su rol). Si tienen bugs
-  abiertos vuelven a opacidad 1 para que destaquen entre las
-  tranquilas.
-- **🐞 N bugs abiertos** (chip en header) — total global. Click activa
-  un filtro que oculta toda US sin bugs abiertos: el mapa queda en
-  modo "dónde duele". Click de nuevo apaga el filtro.
-- **📋 N sin asignar** (chip en header) — incluye drafts de SPEC (con
-  o sin story) y bugs huérfanos (sin story). Click abre el panel
-  lateral en modo bandeja, mostrando cada item con su detalle
-  completo. Es la cola de revisión del Lead.
+- **🐞N badge on the US card** — appears when that US has bugs in
+  `open` or `in-progress`. The count aggregates the live bugs for that
+  US.
+- **A released US with bugs is not dimmed** — US cards in released
+  bands normally render dim (their job is done). If they have open
+  bugs, opacity goes back to 1 so they stand out among the quiet ones.
+- **🐞 N open bugs** (header chip) — global total. Clicking it toggles
+  a filter that hides every US without open bugs: the map switches to
+  "where it hurts" mode. Click again to clear.
+- **📋 N unassigned** (header chip) — includes SPEC drafts (with or
+  without a story) and orphan bugs (without a story). Clicking it
+  opens the side panel in inbox mode, showing each item with its full
+  detail. It's the Lead's review queue.
 
-## Esquema de los datos (`data.js`)
+## Data schema
 
-```js
-window.USM_DATA = {
-  slices: [
-    { id, title, status }   // status opcional: planning | in-progress | released
-  ],
-  activities: [
-    {
-      id, title,
-      steps: [
-        {
-          id, title,
-          stories: [
-            {
-              id,          // p. ej. "US-0042"; el correlativo continúa
-              title,
-              status,      // proposed | active | done | dropped
-              slice,       // id de slice o null para Backlog
-              description, // narrativa "Como X, quiero Y para Z"
-              rationale,   // por qué importa (1-2 líneas)
-              acceptance,  // arreglo de criterios de aceptación
-              tasks        // arreglo opcional [{ title, status }]
-            }
-          ]
-        }
-      ]
-    }
-  ]
+The bundled `data.js` is generated by `build-usm.py` from three sources
+under `source/`:
+
+- `source/skeleton.json` — `{ activities: [{ id, title, steps: [{ id, title }] }] }`. No stories.
+- `source/releases/<slice-id>.json` — `{ id, title, status? }`. `status` is optional (`planning | in-progress | released`).
+- `source/stories/US-XXXX.json` — one file per story:
+
+```json
+{
+  "id": "US-0042",
+  "title": "...",
+  "status": "proposed",         // proposed | active | done | dropped
+  "slice": "v1-0",              // slice id or null for Backlog
+  "step": "create-account",     // step id from skeleton.json — REQUIRED
+  "description": "As X, I want Y so that Z",
+  "rationale": "why it matters (1-2 lines)",
+  "acceptance": [],
+  "tasks": []                   // optional: [{ title, status }]
 }
 ```
 
-Las historias **ya no llevan** un campo `spec` — la relación va al
-revés: cada SPEC apunta a su historia con `story`. El USM filtra los
-SPECs (y los bugs) por `id` de historia al abrir el panel. Una historia
-puede tener varios SPECs y varios bugs.
+The build script groups stories by `step`, sorts them by `id` within
+each step, and nests them under the matching step in the skeleton to
+produce `window.USM_DATA = { slices, activities }`.
 
-### Status del slice (release)
+To find a story without opening every file, grep `source/INDEX.md`.
 
-`status` puede tener tres valores:
+Stories **do not carry** a `spec` field — the relationship goes the
+other way around: each SPEC points to its story via `story`. The USM
+filters SPECs (and bugs) by story `id` when the panel opens. A story
+can have several SPECs and several bugs.
 
-- `planning` — alcance en discusión, sin trabajo iniciado en las US del slice.
-- `in-progress` — alguna US del slice está en `active` o `done`.
-- `released` — shippeado en producción. Las historias se ven tenues en el mapa.
+### Slice (release) status
 
-El campo es **opcional**. Si está, manda. Si falta, se infiere:
+`status` can take three values:
 
-- Hay al menos una US `active` o `done` en el slice → `in-progress`.
-- Todas son `proposed` (o el slice está vacío) → `planning`.
-- `released` **nunca** se infiere — siempre debe marcarse a mano por el PM,
-  porque shippear es decisión humana, no un estado derivable del trabajo.
+- `planning` — scope under discussion, no work started on the slice's US.
+- `in-progress` — at least one US in the slice is `active` or `done`.
+- `released` — shipped to production. Stories render dim on the map.
 
-Esto permite al PM sobreescribir cuando convenga (lock un release en
-`in-progress` aunque todas las US estén `done`, por ejemplo, mientras
-se espera ventana de deployment).
+The field is **optional**. If present, it wins. If missing, it is inferred:
 
-## Esquema de SPECs (`specs.js`)
+- At least one US is `active` or `done` in the slice → `in-progress`.
+- All are `proposed` (or the slice is empty) → `planning`.
+- `released` is **never** inferred — it must always be set by hand by
+  the PM, because shipping is a human decision, not a state derivable
+  from the work.
 
-```js
-window.USM_SPECS = [
-  {
-    id,            // p. ej. "SPEC-0001"; correlativo único en todo el repo
-    title,
-    status,        // draft | ready | approved | archived
-    story,         // id del US al que pertenece o null para trabajo transversal (infra, refactor, CI)
-    context,       // por qué se construye (1 párrafo corto)
-    problem,       // qué está roto o falta (específico)
-    constraints,   // límites duros: sin deps nuevas, performance, etc.
-    subtasks: [
-      {
-        description, // "[verbo] — files: `ruta` — what to change: [qué] — done when: [criterio]"
-        done         // true | false
-      }
-    ],
-    edgeCases,     // lo no obvio que el Developer debe manejar
-    doneCriteria   // cómo el PM verifica de punta a punta
-  }
-]
+This lets the PM override when convenient (lock a release on
+`in-progress` even if every US is `done`, for instance, while waiting
+for a deployment window).
+
+## SPECs schema
+
+One file per SPEC under `source/specs/SPEC-XXXX.json`:
+
+```json
+{
+  "id": "SPEC-0001",
+  "title": "...",
+  "status": "draft",           // draft | ready | approved | archived
+  "story": "US-0001",          // matching US id, or null for cross-cutting work
+  "context": "why we are building it (one short paragraph)",
+  "problem": "what is broken or missing (specific)",
+  "constraints": [],           // array of bullets
+  "subtasks": [
+    {
+      "description": "[verb] — files: `path` — what to change: [what] — done when: [criterion]",
+      "done": false
+    }
+  ],
+  "edgeCases": [],             // array: `<trigger> → <behavior>`
+  "doneCriteria": []           // array: PM walkthrough, one verifiable step per bullet
+}
 ```
 
-`status` significa:
-- `draft` — el Lead lo está escribiendo o el PM aún no lo confirma
-- `ready` — listo para implementarse (el Developer puede tomarlo)
-- `approved` — implementado y aprobado por el PM, esperando PR
-- `archived` — PR mergeado; queda como registro
+The next free ID is one above the highest SPEC listed in
+`source/INDEX.md`. Append a new file, then run `build-usm.py` (or rely
+on the pre-commit hook).
 
-## Esquema de bugs (`bugs.js`)
+`constraints`, `edgeCases` and `doneCriteria` are **always arrays of strings**. One short sentence per bullet. The USM renders them as `<ul>`/`<ol>`. If a section has only one item, it's still a one-element array — never a bare string.
 
-```js
-window.USM_BUGS = [
-  {
-    id,                  // p. ej. "BUG-0001"
-    title,
-    status,              // open | in-progress | fixed | wont-fix
-    story,               // id del US al que pertenece, o null para bugs huérfanos (raro)
-    foundAt,             // ISO 8601 — cuándo se detectó
-    description,         // qué está mal (1 oración clara)
-    stepsToReproduce,    // arreglo de strings
-    expected,            // qué debería pasar
-    actual,              // qué pasa en realidad
-    affectedArea,        // archivos/módulos sospechosos
-    rootCause,           // qué exactamente lo causa (Lead lo llena)
-    fix: [
-      {
-        description, // mismo formato que las subtasks de SPEC
-        done
-      }
-    ],
-    regressionTest,      // test que evita que recurra (obligatorio)
-    doneCriteria         // cómo el PM verifica que está corregido
-  }
-]
+The SPEC **does not** carry its own acceptance criteria: the criteria live on the linked US (`acceptance` in `source/stories/US-XXXX.json`) and the USM already shows them when the user opens the story. The SPEC's `doneCriteria` is the PM walkthrough that proves those criteria are met end to end.
+
+`status` means:
+- `draft` — the Lead is writing it or the PM hasn't confirmed it yet
+- `ready` — ready to implement (the Developer can pick it up)
+- `approved` — implemented and approved by the PM, awaiting PR
+- `archived` — PR merged; kept as a record
+
+## Bugs schema
+
+One file per bug under `source/bugs/BUG-XXXX.json`:
+
+```json
+{
+  "id": "BUG-0001",
+  "title": "...",
+  "status": "open",            // open | in-progress | fixed | wont-fix
+  "story": "US-0001",          // matching US id, or null for orphan bugs (rare)
+  "foundAt": "2026-05-15",     // ISO 8601
+  "description": "what's wrong (one clear sentence)",
+  "stepsToReproduce": [],
+  "expected": "what should happen",
+  "actual": "what actually happens",
+  "affectedArea": "suspect files/modules",
+  "rootCause": "exactly what causes it",
+  "fix": [
+    { "description": "[verb] — files: `path` — what to change: [what] — done when: [criterion]", "done": false }
+  ],
+  "regressionTest": "test that prevents recurrence (mandatory)",
+  "doneCriteria": []
+}
 ```
 
-Cuando se abre el detalle de una historia, el panel muestra cada SPEC y
-cada bug como tarjeta colapsable con todas estas secciones. Por defecto
-las tarjetas se abren si están vivas (`ready`/`approved` para SPECs,
-`open`/`in-progress` para bugs) y cerradas si están terminadas.
+`doneCriteria` is an array of strings, same rule as in SPECs. One short
+sentence per bullet.
 
-## Histórico
+When a story's detail opens, the panel shows each SPEC and each bug as
+a collapsible card with all of these sections. By default, cards open
+if they're alive (`ready`/`approved` for SPECs, `open`/`in-progress`
+for bugs) and stay closed if they're done.
 
-Hasta `v0.6` los SPECs vivían como `.md` en `.af/specs/active/` y
-`archived/`. A partir de la migración a JSON, la fuente de verdad es
-`specs.js` y `bugs.js` bajo `.af/docs/usm/`; el directorio
-`.af/specs/` fue eliminado del repo y del bootstrap del framework.
+SPEC cards show only the technical detail for the Developer (context,
+problem, constraints, subtasks, edge cases, done criteria). The
+product acceptance criteria live on the US and are shown at the top of
+the panel when the user opens the story.
+
+## History
+
+- Up to `v0.6` SPECs lived as `.md` files under `.af/specs/active/`
+  and `archived/`. They were migrated to a single JSON array in
+  `.af/docs/usm/specs.js`; the `.af/specs/` directory was removed.
+- On `v0.9` the source of truth moved again, this time to per-item
+  JSON files under `.af/docs/usm/source/`. The bundled `data.js`,
+  `specs.js` and `bugs.js` became generated artifacts produced by
+  `.af/bin/build-usm.py`. Reason: catalogues that grow past ~150
+  stories and a dozen SPECs are hostile to diffs, merge conflicts and
+  Claude's context window.

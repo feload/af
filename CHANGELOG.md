@@ -2,6 +2,24 @@
 
 All notable changes to the af framework are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## v0.9.0 — 2026-05-15
+
+### Changed (breaking)
+- USM source of truth moves to per-item JSON files under `.af/docs/usm/source/` (`skeleton.json`, `releases/<slice>.json`, `stories/US-XXXX.json`, `specs/SPEC-XXXX.json`, `bugs/BUG-XXXX.json`). The bundled `.af/docs/usm/{data,specs,bugs}.js` become **generated artifacts** produced by `.af/bin/build-usm.py` — never hand-edit. Reason: a single bundled `data.js`/`specs.js`/`bugs.js` was hostile to git diffs, merge conflicts and Claude's context window once the catalogue grew past ~150 stories and a dozen SPECs.
+- Story entries now carry a `step` field that maps them to the matching `step.id` from `source/skeleton.json`; the build script groups stories by `step` and nests them under the backbone at build time.
+- `agents/lead.md`, `agents/developer.md`, `templates/spec.md`, `templates/bug.md`, `docs/usm.md`, `docs/workflow.md`, and every slash command in `commands/` updated to write to and read from `source/`. Reading or hand-editing the bundled `.js` is explicitly forbidden.
+- The `update-here.sh` "host-populated, never touched" set flips from `data.js`/`specs.js`/`bugs.js` (now overwritten as regenerated artifacts) to everything under `.af/docs/usm/source/`.
+
+### Added
+- `bin/build-usm.py` — idempotent rebuild of the bundled `.js` files and `source/INDEX.md` from per-item JSON. Skips a bundle if its `source/<dir>/` doesn't exist yet (gradual adoption).
+- `bin/migrate-data-to-source.py`, `bin/migrate-specs-bugs-to-source.py` — one-shot migrators with lossless round-trip verification. Existing hosts can run them (or `update-here.sh` runs them automatically when it detects the pre-source layout) to split their `data.js`/`specs.js`/`bugs.js` into per-item files.
+- `hooks/pre-commit` — git hook that re-runs `build-usm.py` and re-stages the regenerated bundles whenever anything under `source/` (or `bin/build-usm.py` itself) is staged. Opt-in: enable per clone with `git config core.hooksPath .af/hooks`. `/af-init` and `/af-update` print the one-liner but never modify the user's git config.
+- `bin/bootstrap-here.sh` now seeds an empty `source/` tree (`skeleton.json` + `.gitkeep` files under `releases/`, `stories/`, `specs/`, `bugs/`), installs `build-usm.py` and `pre-commit`, and runs `build-usm.py` once so the static viewer has bundles to read.
+- `bin/update-here.sh` detects pre-source hosts (have `data.js`, no `source/`) and runs the migrators automatically (when `python3` is available), then regenerates the bundles. Prints a clear manual fallback when `python3` is missing.
+
+### Notes
+- The `card` field was already removed from SPECs and BUGs in v0.8.0 and stays out of the new templates.
+
 ## v0.8.0 — 2026-05-12
 
 ### Changed (breaking)

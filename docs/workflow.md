@@ -14,7 +14,7 @@ af is self-contained: there is no external tracker. All scope lives in the USM u
 
 1. **Domain** — `.af/docs/domain.md` must be populated (entities, business rules, glossary) before the backbone is meaningful. The Lead refuses to design a backbone over an empty `domain.md`.
 2. **Backbone** — Activities (the user's journey, left-to-right) and Steps (concrete actions inside each Activity) live in `.af/docs/usm/source/skeleton.json`. Build or extend with `/af-create-backbone`.
-3. **Slices (releases)** — a slice groups the User Stories that will ship together, anchored by a **goal**: one sentence describing what shipping the release achieves for the user or the business. Create with `/af-create-slice`. The goal is the rubric for what belongs in the slice and what stays in the Backlog. A slice in `planning` may sketch its goal later, but it must have a non-empty `goal` before its status flips to `in-progress` or `released`.
+3. **Slices (releases)** — a slice groups the User Stories that will ship together, anchored by a **goal**: one sentence describing what shipping the release achieves for the user or the business. Create with `/af-create-slice`. The goal is the rubric for what belongs in the slice and what stays in the Backlog. A slice in `planning` may sketch its goal later, but it must have a non-empty `goal` before its status flips to `in-progress` or `released`. `/af-create-slice` optionally continues into a Backlog sweep and a value-delivery walkthrough (10-axis rubric in `agents/lead.md`) to surface stories that would block end-to-end value — navigation, access, edge states, observability, etc. — and propose them as new US. `/af-review-slice <slice-id>` reruns the delta before flipping the slice to `in-progress`.
 4. **Stories** — User Stories (Options) hang off Steps via their `step` field, one file per story under `.af/docs/usm/source/stories/`. Create with `/af-create-story`. When the PM names a slice, the Lead reads the slice's goal and uses it to anchor the story's narrative, rationale and acceptance criteria. Default `slice` is `null` (Backlog) when the PM has no destination in mind.
 5. **SPECs / Bugs** — written against a Story (or as cross-cutting work). Live as one file per item under `.af/docs/usm/source/specs/` and `.af/docs/usm/source/bugs/`.
 
@@ -22,9 +22,10 @@ af is self-contained: there is no external tracker. All scope lives in the USM u
 
 ```
 PM: backbone exists? if not → /af-create-backbone (writes source/skeleton.json)
-PM: planning a release? → /af-create-slice (writes source/releases/<slice>.json with a goal)
+PM: planning a release? → /af-create-slice (writes source/releases/<slice>.json with a goal; optionally sweeps Backlog and walks the 10-axis rubric to propose missing US)
 PM: /af-create-story → US-####.json proposed in source/stories/ (slice: <slice-id> or null for Backlog, anchored on slice goal when given)
 PM: /af-create-spec → Lead writes SPEC-####.json in source/specs/ → PM confirms → status: ready
+PM: /af-review-slice <slice-id> → readiness table + rubric delta + verdict → PM flips slice to in-progress when ready
 Developer: /af-implement-spec → implements subtasks + tests → hands off test tree + run commands
 PM: review + run tests → status: approved
 Developer: create PR
@@ -123,7 +124,8 @@ Schema reference: `.af/docs/usm.md`.
 Each command does one phase of the workflow and stops. The agent does not auto-progress to the next phase — if the PM wants to move on, they start a new session with the next command.
 
 - `/af-create-backbone` defines or extends Activities + Steps in `source/skeleton.json`. Requires `domain.md` populated. It does not create Stories.
-- `/af-create-slice` writes a new slice file under `source/releases/` with `id`, `title`, `goal` (mandatory), and `status` (`planning` by default). It does not create Stories.
+- `/af-create-slice` writes a new slice file under `source/releases/` with `id`, `title`, `goal` (mandatory), and `status` (`planning` by default). After writing it, the command offers to continue into a Backlog sweep (move candidate stories into the slice one-by-one) and a value-delivery walkthrough (10-axis rubric anchored on the goal — propose new US for gaps, after checking for cross-slice coverage). The PM can stop after the slice is recorded and resume later. It does not write SPECs and does not add new Activities.
+- `/af-review-slice <slice-id>` is the readiness check before flipping a slice to `in-progress`. Shows a US-by-US readiness table (which SPECs are `draft`/`ready`/`approved`), reruns the value-delivery rubric as a delta against the current state, asks about scope changes, and prints a verdict — *ready to flip* or *pendings before flip*. It does not edit the slice's `status` (PM does that manually) and it does not write SPECs.
 - `/af-create-story` files a new US under an existing Step (and may add a Step inline if needed) as a new file in `source/stories/`. When the PM names a slice, the slice's goal anchors the story. It does not write SPECs.
 - `/af-create-spec` writes a SPEC as a new file in `source/specs/`. It does not implement.
 - `/af-create-bug` writes a BUG as a new file in `source/bugs/`. It does not fix.

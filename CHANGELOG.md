@@ -2,6 +2,16 @@
 
 All notable changes to the af framework are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## v0.11.0 — 2026-05-16
+
+### Added
+- **Value-delivery rubric** in `agents/lead.md` — 10 axes (Discovery, Access, Happy path, Edge states, Closure, Persistence, Localization+accessibility, Observability, Security, Performance) anchored on the slice's `goal`. For each axis the Lead checks whether the current set of stories lets the user reach and complete the goal end-to-end. Includes a cross-slice coverage protocol so axes already addressed by US in `released` or `in-progress` slices are surfaced as matches (clear or ambiguous) before any new US is proposed. Reason: PMs were ending up with slices that picked the obvious US for a goal but missed crosscutting prerequisites (navigation, access, observability) without which the user could not actually realize value.
+- `/af-review-slice <slice-id>` slash command (sonnet/medium). Readiness check before flipping a slice to `in-progress`: prints a US-by-US readiness table (SPEC status: `no SPEC` / `pending Lead` / `pending PM` / `ready` / `approved` / `archived`), reruns the value-delivery rubric as a delta against the current state of the slice, asks about scope changes, and prints a verdict — *ready to flip* or *pendings before flip*. Does not edit the slice's `status` (PM does that manually) and does not write SPECs.
+
+### Changed
+- `/af-create-slice` now offers a content-planning continuation after recording the slice. Fase 1 is unchanged — capture `{id, title, goal, status}` and write `source/releases/<slice-id>.json`. After confirmation it asks whether to continue. If yes: Fase 2 sweeps `source/stories/` for Backlog candidates and moves the ones that visibly serve the goal into the slice one-by-one; Fase 3 walks the 10-axis Value-delivery rubric anchored on the goal and, for each gap, proposes a new US (PM confirms one-by-one before any file is written). The PM can stop after Fase 1 and resume later — the slice stays in `planning`. The previous Stop after writing the slice file is preserved as the early-exit path.
+- `docs/workflow.md` updated: the Flow diagram now lists `/af-review-slice` between SPEC drafting and implementation; the Slices bullet (under *Domain first, then backbone, then stories*) names the rubric; the Session focus list adds `/af-review-slice` and rewrites the `/af-create-slice` bullet to describe the three-phase flow.
+
 ## v0.10.0 — 2026-05-15
 
 ### Added

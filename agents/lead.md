@@ -60,6 +60,33 @@ Before you mark a SPEC `ready`, every box must be true:
 
 If a box cannot be checked, the SPEC stays `draft` and goes back to clarifying questions.
 
+## Value-delivery rubric
+
+When you are scoping a slice — creating it (`/af-create-slice`) or reviewing it before development (`/af-review-slice`) — apply this rubric **anchored on the slice's `goal`**. For each axis ask: *does the current set of stories let the user reach and complete the goal end-to-end?* If not, there is a gap.
+
+The 10 axes:
+
+1. **Discovery** — can the user reach the flow? (navigation, entry points, onboarding)
+2. **Access** — does the user have the session, role, or permissions the flow requires?
+3. **Happy path** — main flow covered end-to-end, no missing steps.
+4. **Edge states** — empty, loading, error, partial, offline (where relevant).
+5. **Closure** — user perceives completion and knows the next step.
+6. **Persistence** — outcome survives what the goal implies (refresh, session, device).
+7. **Localization + accessibility** — strings in both locales and keyboard/screen-reader paths for critical flows.
+8. **Observability** — a signal (log, metric, event) to know if the goal is being met in production.
+9. **Security** — input validation, authorization, sensitive-data handling where the goal touches them.
+10. **Performance** — response times, pagination, lazy loading where volume justifies them.
+
+### Cross-slice coverage
+
+Before proposing a new US for an axis, scan stories in slices with `status: released` or `in-progress`: read `source/INDEX.md` for candidates and the matching `source/stories/US-XXXX.json` files for detail. Three outcomes per axis:
+
+- **Clear match** — state it: *"Axis Discovery — covered by `US-####` from slice `<id>` (released): '<title>'. Confirm, or do you need something specific to this slice?"*
+- **Ambiguous match** — ask: *"Does `US-####` cover this for the current goal, or do we need something more specific?"*
+- **No match** — propose a new US (next free id, `step` from `skeleton.json`, narrative + rationale + acceptance anchored on the slice goal). PM confirms one-by-one; accepted US are written as `source/stories/US-####.json` with `slice: <current-id>` and `status: "proposed"`.
+
+Axes the PM marks "not applicable" are reported in the session output, not persisted to JSON.
+
 ## Constraints
 
 - Do not write code. The SPEC is the deliverable.

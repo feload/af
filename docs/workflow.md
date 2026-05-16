@@ -14,14 +14,16 @@ af is self-contained: there is no external tracker. All scope lives in the USM u
 
 1. **Domain** — `.af/docs/domain.md` must be populated (entities, business rules, glossary) before the backbone is meaningful. The Lead refuses to design a backbone over an empty `domain.md`.
 2. **Backbone** — Activities (the user's journey, left-to-right) and Steps (concrete actions inside each Activity) live in `.af/docs/usm/source/skeleton.json`. Build or extend with `/af-create-backbone`.
-3. **Stories** — User Stories (Options) hang off Steps via their `step` field, one file per story under `.af/docs/usm/source/stories/`. Create with `/af-create-story`. Default `slice` is `null` (Backlog); the PM moves them into a slice when planning a release.
-4. **SPECs / Bugs** — written against a Story (or as cross-cutting work). Live as one file per item under `.af/docs/usm/source/specs/` and `.af/docs/usm/source/bugs/`.
+3. **Slices (releases)** — a slice groups the User Stories that will ship together, anchored by a **goal**: one sentence describing what shipping the release achieves for the user or the business. Create with `/af-create-slice`. The goal is the rubric for what belongs in the slice and what stays in the Backlog. A slice in `planning` may sketch its goal later, but it must have a non-empty `goal` before its status flips to `in-progress` or `released`.
+4. **Stories** — User Stories (Options) hang off Steps via their `step` field, one file per story under `.af/docs/usm/source/stories/`. Create with `/af-create-story`. When the PM names a slice, the Lead reads the slice's goal and uses it to anchor the story's narrative, rationale and acceptance criteria. Default `slice` is `null` (Backlog) when the PM has no destination in mind.
+5. **SPECs / Bugs** — written against a Story (or as cross-cutting work). Live as one file per item under `.af/docs/usm/source/specs/` and `.af/docs/usm/source/bugs/`.
 
 ## Flow
 
 ```
 PM: backbone exists? if not → /af-create-backbone (writes source/skeleton.json)
-PM: /af-create-story → US-####.json proposed in source/stories/ (slice: null)
+PM: planning a release? → /af-create-slice (writes source/releases/<slice>.json with a goal)
+PM: /af-create-story → US-####.json proposed in source/stories/ (slice: <slice-id> or null for Backlog, anchored on slice goal when given)
 PM: /af-create-spec → Lead writes SPEC-####.json in source/specs/ → PM confirms → status: ready
 Developer: /af-implement-spec → implements subtasks + tests → hands off test tree + run commands
 PM: review + run tests → status: approved
@@ -33,7 +35,8 @@ After every write under `source/`, `build-usm.py` regenerates the bundled `.js` 
 
 ## Rules
 
-- Every Story starts in Backlog (`slice: null`) unless the PM explicitly slices it.
+- Every Slice has a `goal`. It may be empty while the slice is in `planning`, but it must be filled before the slice's status flips to `in-progress` or `released`. A slice without a goal is a garbage bag — refuse to plan against it.
+- Every Story either serves the goal of the slice it's attached to or sits in Backlog (`slice: null`). The PM moves a story into a slice only when its narrative visibly advances the slice's goal.
 - Every implementation starts from a `ready` SPEC; every fix starts from an `in-progress` BUG.
 - The SPEC is the single source of truth — it must be complete enough to implement without questions.
 - Lead is responsible for SPEC quality: if Developer is blocked, Lead failed to spec it well enough.
@@ -78,7 +81,7 @@ Everything af tracks lives under `.af/docs/usm/source/` (the single source of tr
 
 - Backbone: `.af/docs/usm/source/skeleton.json` — Activities + Steps, no stories.
 - Stories: `.af/docs/usm/source/stories/US-XXXX.json` — one file per story, carries its `step` field to nest under the backbone at build time.
-- Releases (slices): `.af/docs/usm/source/releases/<slice-id>.json`.
+- Releases (slices): `.af/docs/usm/source/releases/<slice-id>.json` — `{ id, title, goal, status? }`. `goal` is the one-sentence rubric for what belongs in the slice.
 - SPECs: `.af/docs/usm/source/specs/SPEC-XXXX.json`.
 - Bugs:  `.af/docs/usm/source/bugs/BUG-XXXX.json`.
 - Catalogue: `.af/docs/usm/source/INDEX.md` — grep-friendly listing of all stories, SPECs and bugs with id, title and status.
@@ -120,7 +123,8 @@ Schema reference: `.af/docs/usm.md`.
 Each command does one phase of the workflow and stops. The agent does not auto-progress to the next phase — if the PM wants to move on, they start a new session with the next command.
 
 - `/af-create-backbone` defines or extends Activities + Steps in `source/skeleton.json`. Requires `domain.md` populated. It does not create Stories.
-- `/af-create-story` files a new US under an existing Step (and may add a Step inline if needed) as a new file in `source/stories/`. It does not write SPECs.
+- `/af-create-slice` writes a new slice file under `source/releases/` with `id`, `title`, `goal` (mandatory), and `status` (`planning` by default). It does not create Stories.
+- `/af-create-story` files a new US under an existing Step (and may add a Step inline if needed) as a new file in `source/stories/`. When the PM names a slice, the slice's goal anchors the story. It does not write SPECs.
 - `/af-create-spec` writes a SPEC as a new file in `source/specs/`. It does not implement.
 - `/af-create-bug` writes a BUG as a new file in `source/bugs/`. It does not fix.
 - `/af-implement-spec` implements a `ready` SPEC from `source/specs/`. It does not pick up another SPEC.

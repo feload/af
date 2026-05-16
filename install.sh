@@ -5,17 +5,17 @@
 # files cached at ~/.af/<version>/. Run /af-init in any repo to bootstrap it.
 #
 #   curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh
-#   curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh -s -- v0.9.0
+#   curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh -s -- v0.10.0
 #
 # Per-project install — drops everything into the current directory:
 #
 #   curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh -s -- --local
-#   curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh -s -- --local v0.9.0
+#   curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh | sh -s -- --local v0.10.0
 #
 # Two-step (recommended for review):
 #   curl -fsSL https://raw.githubusercontent.com/feload/af/main/install.sh -o af-install.sh
 #   less af-install.sh
-#   sh af-install.sh v0.9.0
+#   sh af-install.sh v0.10.0
 #
 # Existing files are never overwritten.
 

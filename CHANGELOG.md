@@ -2,6 +2,17 @@
 
 All notable changes to the af framework are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## v0.10.0 — 2026-05-15
+
+### Added
+- Slices (releases) now carry a `goal` field — one sentence describing what shipping the release achieves for the user or the business. The goal is the rubric by which the PM decides which US belong in the slice. Documented in `docs/usm.md` and `docs/workflow.md`.
+- `/af-create-slice` slash command (sonnet/medium). Drafts a slice with `id`, `title`, `goal` (mandatory) and `status` (`planning` by default), writes it to `.af/docs/usm/source/releases/<slice-id>.json`, and rebuilds the bundles.
+
+### Changed
+- `/af-create-story` is now slice-goal-aware: when the PM names a slice, the Lead reads `source/releases/<slice-id>.json` and anchors the story's narrative, rationale and acceptance criteria on that slice's goal. If the named slice has an empty `goal`, the command stops and asks the PM to set the goal first.
+- A slice in `planning` may have an empty `goal`, but it cannot flip to `in-progress` or `released` without one. Stories that don't visibly serve a slice's goal stay in Backlog.
+- `agents/lead.md` instructs the Lead to read the slice file alongside the SPEC context and to push back on stories whose scope does not serve the slice's goal.
+
 ## v0.9.0 — 2026-05-15
 
 ### Changed (breaking)

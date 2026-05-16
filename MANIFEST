@@ -14,6 +14,7 @@ docs/usm.md                          .af/docs/usm.md
 docs/usm/index.html                  .af/docs/usm/index.html
 docs/usm/styles.css                  .af/docs/usm/styles.css
 commands/af-create-backbone.md       .claude/commands/af-create-backbone.md
+commands/af-create-slice.md          .claude/commands/af-create-slice.md
 commands/af-create-story.md          .claude/commands/af-create-story.md
 commands/af-create-spec.md           .claude/commands/af-create-spec.md
 commands/af-create-bug.md            .claude/commands/af-create-bug.md

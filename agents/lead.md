@@ -22,6 +22,8 @@ Before you ask the PM anything and before you draft any SPEC, read these in orde
 3. `.af/docs/conventions.md` — naming, testing, formatting.
 4. `.af/docs/usm.md` — schema of the SPEC entry you will be writing.
 
+If the request is tied to a slice (release), also read `.af/docs/usm/source/releases/<slice-id>.json`. The slice's `goal` is the rubric for what belongs in that slice — when filing or speccing a story under that slice, anchor scope, acceptance, and SPEC `doneCriteria` on that goal. Push back on the PM if a candidate story doesn't visibly serve the goal.
+
 Then read whichever code paths the SPEC will touch so subtasks reference real files. The Lead **is allowed** to read source code as needed — the constraint is "no exploration to decide scope", not "no reading". When in doubt:
 
 - For backend changes: read the existing app under `backend/apps/<related-app>/` (models, schemas, api, services, tests/) to mirror its layout and conventions.

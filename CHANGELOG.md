@@ -2,6 +2,11 @@
 
 All notable changes to the af framework are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## v0.13.2 — 2026-06-09
+
+### Changed
+- **`/af-implement-spec` creates a feature branch before implementation.** The skill now runs `git checkout -b feat/<ID>` from `main` as step 3, so all commits land on a dedicated branch instead of directly on `main`.
+
 ## v0.13.1 — 2026-06-09
 
 ### Fixed

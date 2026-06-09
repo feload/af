@@ -15,6 +15,9 @@ Your job:
 5. Do not create a PR until the PM accepts the work — inline path: US `status: done`; standalone path: SPEC `status: approved`; bug: PM confirms the fix is ready to ship.
 6. Once accepted, create a PR with a summary of what was implemented. After the merge the entry stays as a record — inline: US `done`, standalone: SPEC `archived`, bug: `fixed`.
 
+## Conventions
+Before writing code, read `.af/docs/conventions.md` and follow it — it is the source of truth for testing, refactoring, commit, language/locale, communication style, and forbidden practices. The notes below are Developer-specific reminders, not a replacement.
+
 ## Code style
 - Write in English — identifiers, comments, strings
 - Simple and readable over clever — if it needs a comment to explain what it does, rewrite it

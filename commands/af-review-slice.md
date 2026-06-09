@@ -30,15 +30,15 @@ effort: medium
    - Axes already covered by a US in this slice → list as covered. No question.
    - Axes covered by a US in another slice with `status: released` or `in-progress` → list as covered (note which US and which slice). No question.
    - Axes where coverage regressed (covering slice de-scoped, story moved out) → flag and ask.
-   - Axes where a new gap appeared (scope changed, a story was reshaped) → propose a new US following the same protocol as `/af-create-slice` Fase 3 (PM confirms one-by-one).
+   - Axes where a new gap appeared (scope changed, a story was reshaped) → propose a new US following the same protocol as `/af-create-slice` Phase 3 (PM confirms one-by-one).
 
-3. **Scope question.** Ask the PM one question: *"Has anything changed in the release's scope since the slice was created? Stakeholders adding requirements, stories that no longer apply, integrations dropped, etc."* Walk through any changes case by case. New US go through the same write protocol as `/af-create-slice` Fase 3.
+3. **Scope question.** Ask the PM one question: *"Has anything changed in the release's scope since the slice was created? Stakeholders adding requirements, stories that no longer apply, integrations dropped, etc."* Walk through any changes case by case. New US go through the same write protocol as `/af-create-slice` Phase 3.
 
 4. **Verdict.** Print one of:
    - **Ready to flip to `in-progress`** — every US is at `status: ready` (inline path) or has at least one linked SPEC `status: ready` (or beyond), no rubric gaps, no scope changes pending.
    - **Pendings before flip** — list blockers, one line each, naming the responsible role (Lead, PM, Developer).
 
-**Output:** Slice id, its goal, the readiness table, the rubric delta summary, and the verdict. No file is written by this command except newly-proposed US (which follow the same write protocol as `/af-create-slice` Fase 3).
+**Output:** Slice id, its goal, the readiness table, the rubric delta summary, and the verdict. No file is written by this command except newly-proposed US (which follow the same write protocol as `/af-create-slice` Phase 3).
 
 **Scope (what this command does *not* do):**
 

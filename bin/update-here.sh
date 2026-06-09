@@ -132,6 +132,30 @@ EOF
     fi
 fi
 
+# Backfill the per-project title into skeleton.json for hosts that predate
+# it. Defaults to the repo directory name; leaves an existing name untouched.
+if command -v python3 >/dev/null 2>&1 && [ -f .af/docs/usm/source/skeleton.json ]; then
+    AF_PROJECT_NAME=$(basename "$(pwd)") python3 - <<'PY' || \
+        printf "  warn   could not backfill project name in skeleton.json\n"
+import json, os, sys
+p = ".af/docs/usm/source/skeleton.json"
+try:
+    data = json.load(open(p, encoding="utf-8"))
+except Exception:
+    sys.exit(0)
+if not isinstance(data, dict) or data.get("project"):
+    sys.exit(0)
+ordered = {"project": os.environ.get("AF_PROJECT_NAME", "")}
+for k, v in data.items():
+    if k != "project":
+        ordered[k] = v
+with open(p, "w", encoding="utf-8") as f:
+    json.dump(ordered, f, indent=2, ensure_ascii=False)
+    f.write("\n")
+print("  write  .af/docs/usm/source/skeleton.json (added project name)")
+PY
+fi
+
 # Regenerate the bundles so they match the new build script's output.
 if command -v python3 >/dev/null 2>&1; then
     if [ -d .af/docs/usm/source ]; then

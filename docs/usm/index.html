@@ -1,34 +1,34 @@
 <!DOCTYPE html>
-<html lang="es-MX">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Fredo — User Story Map</title>
+  <title>af — User Story Map</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header>
     <div class="header-top">
       <div class="header-text">
-        <h1>Fredo — User Story Map</h1>
-        <p>Actividades y pasos en la parte superior; bajo cada paso, las historias agrupadas por versión. Click en una historia para ver su detalle. Click en el chip de una versión para colapsarla. Ctrl + rueda del mouse para scroll horizontal.</p>
-        <div class="legend" aria-label="Leyenda de estatus">
-          <span class="legend-item"><span class="legend-swatch proposed"></span>propuesta</span>
-          <span class="legend-item"><span class="legend-swatch ready"></span>lista para iniciar</span>
-          <span class="legend-item"><span class="legend-swatch active"></span>en desarrollo</span>
-          <span class="legend-item"><span class="legend-swatch done"></span>lista</span>
-          <span class="legend-item"><span class="legend-swatch dropped"></span>descartada</span>
+        <h1 id="usm-heading">af — User Story Map</h1>
+        <p>Activities and steps at the top; under each step, the stories grouped by version. Click a story to see its detail. Click a version chip to collapse it. Ctrl + mouse wheel for horizontal scroll.</p>
+        <div class="legend" aria-label="Status legend">
+          <span class="legend-item"><span class="legend-swatch proposed"></span>proposed</span>
+          <span class="legend-item"><span class="legend-swatch ready"></span>ready to start</span>
+          <span class="legend-item"><span class="legend-swatch active"></span>in progress</span>
+          <span class="legend-item"><span class="legend-swatch done"></span>done</span>
+          <span class="legend-item"><span class="legend-swatch dropped"></span>dropped</span>
         </div>
-        <div class="header-chips" aria-label="Indicadores">
+        <div class="header-chips" aria-label="Indicators">
           <button type="button" class="header-chip bugs-chip" id="bugs-chip" aria-pressed="false" hidden>
             <span aria-hidden="true">🐞</span>
             <span class="chip-count" id="bugs-chip-count">0</span>
-            <span class="chip-label">bugs abiertos</span>
+            <span class="chip-label">open bugs</span>
           </button>
           <button type="button" class="header-chip tray-chip" id="tray-chip" hidden>
             <span aria-hidden="true">📋</span>
             <span class="chip-count" id="tray-chip-count">0</span>
-            <span class="chip-label">sin asignar</span>
+            <span class="chip-label">unassigned</span>
           </button>
         </div>
       </div>
@@ -40,11 +40,11 @@
   </main>
 
   <aside id="detail-pane" class="detail-pane" aria-hidden="true" aria-labelledby="pane-title">
-    <button type="button" class="close-btn" id="pane-close" aria-label="Cerrar panel">×</button>
+    <button type="button" class="close-btn" id="pane-close" aria-label="Close panel">×</button>
     <div id="pane-content"></div>
   </aside>
 
-  <!-- Modal genérico -->
+  <!-- Generic modal -->
   <div id="modal-backdrop" class="modal-backdrop" aria-hidden="true">
     <div class="modal" id="modal" role="dialog" aria-modal="true">
       <div id="modal-content"></div>
@@ -62,23 +62,23 @@
       const root = document.getElementById('usm-root');
 
       const STATUS_LABEL = {
-        proposed: 'propuesta',
-        ready: 'lista para iniciar',
-        active: 'en desarrollo',
-        done: 'lista',
-        dropped: 'descartada'
+        proposed: 'proposed',
+        ready: 'ready to start',
+        active: 'in progress',
+        done: 'done',
+        dropped: 'dropped'
       };
       const BUG_STATUS_LABEL = {
-        open: 'abierto',
-        'in-progress': 'en curso',
-        fixed: 'corregido',
-        'wont-fix': 'no se corrige'
+        open: 'open',
+        'in-progress': 'in progress',
+        fixed: 'fixed',
+        'wont-fix': 'won\'t fix'
       };
       const SPEC_STATUS_LABEL = {
-        draft: 'borrador',
-        ready: 'listo',
-        approved: 'aprobado',
-        archived: 'archivado'
+        draft: 'draft',
+        ready: 'ready',
+        approved: 'approved',
+        archived: 'archived'
       };
 
       function escapeHtml(s) {
@@ -95,11 +95,11 @@
           .replace(/^-|-$/g, '');
       }
 
-      // ===== Estado de cambios pendientes =====
-      // Persiste en localStorage para que sobreviva al refresh.
-      // En cada cambio se guarda; al cargar se reconcilia con data.js para
-      // descartar ítems que ya fueron aplicados.
-      const STORAGE_KEY = 'fredo_usm_pending_v2';
+      // ===== Pending changes state =====
+      // Persisted to localStorage so it survives a refresh.
+      // Saved on every change; on load it reconciles with data.js to
+      // drop items that have already been applied.
+      const STORAGE_KEY = 'af_usm_pending_v2';
       const pendingChanges = {
         newSlice: null,
         moves: {}
@@ -108,7 +108,7 @@
       function savePendingChanges() {
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(pendingChanges));
-        } catch (e) { /* localStorage no disponible: lo ignoramos */ }
+        } catch (e) { /* localStorage unavailable: ignore it */ }
       }
 
       function loadPendingChanges() {
@@ -144,14 +144,14 @@
         return story.slice || null;
       }
 
-      // Status del slice. Si el slice trae `status` explícito, ese manda.
-      // Si no, se infiere de las US asignadas: si hay alguna en `active`
-      // o `done`, → in-progress; si todas son `proposed` (o no hay), →
-      // planning. `released` siempre es manual (shippear es decisión humana).
+      // Slice status. If the slice has an explicit `status`, that wins.
+      // Otherwise it is inferred from the assigned US: if any is `active`
+      // or `done`, → in-progress; if all are `proposed` (or there are none), →
+      // planning. `released` is always manual (shipping is a human decision).
       const SLICE_STATUS_LABEL = {
-        planning: 'en planeación',
-        'in-progress': 'en desarrollo',
-        released: 'liberada'
+        planning: 'planning',
+        'in-progress': 'in progress',
+        released: 'released'
       };
       const VALID_SLICE_STATUS = { planning: true, 'in-progress': true, released: true };
 
@@ -165,7 +165,7 @@
         }
         if (!slice) return 'planning';
         if (slice.status && VALID_SLICE_STATUS[slice.status]) return slice.status;
-        // Inferir desde las US asignadas (considerando moves pendientes).
+        // Infer from the assigned US (taking pending moves into account).
         let hasActiveOrDone = false;
         data.activities.forEach(function (act) {
           (act.steps || []).forEach(function (step) {
@@ -214,8 +214,8 @@
       grid.className = 'usm-grid';
       root.appendChild(grid);
 
-      // Bugs abiertos (open|in-progress) por id de historia. Recalculado
-      // en cada renderMap por si el JS de bugs cambia en caliente.
+      // Open bugs (open|in-progress) by story id. Recomputed on every
+      // renderMap in case the bugs JS changes at runtime.
       function openBugsByStory() {
         const m = {};
         bugs.forEach(function (b) {
@@ -247,7 +247,7 @@
           bugsChip.hidden = false;
         } else {
           bugsChip.hidden = true;
-          // Si el filtro estaba activo y ya no hay bugs, lo apago.
+          // If the filter was active and there are no more bugs, turn it off.
           if (grid.classList.contains('filter-bugs-only')) {
             grid.classList.remove('filter-bugs-only');
             bugsChip.setAttribute('aria-pressed', 'false');
@@ -280,7 +280,7 @@
 
         grid.style.gridTemplateColumns = 'repeat(' + totalCols + ', 120px)';
 
-        // Fila 1: actividades
+        // Row 1: activities
         data.activities.forEach(function (act, i) {
           const r = activityRanges[i];
           const el = document.createElement('div');
@@ -291,7 +291,7 @@
           grid.appendChild(el);
         });
 
-        // Fila 2: pasos
+        // Row 2: steps
         let col = 1;
         data.activities.forEach(function (act) {
           if (act.steps.length === 0) {
@@ -299,7 +299,7 @@
             el.className = 'cell step empty';
             el.style.gridRow = '2';
             el.style.gridColumn = String(col);
-            el.textContent = 'sin pasos aún';
+            el.textContent = 'no steps yet';
             grid.appendChild(el);
             col += 1;
           } else {
@@ -316,7 +316,7 @@
           }
         });
 
-        // Overlays de columna (uno por paso real, abarca toda la altura)
+        // Column overlays (one per real step, spans the full height)
         let overlayCol = 1;
         data.activities.forEach(function (act) {
           if (act.steps.length === 0) {
@@ -334,11 +334,11 @@
           });
         });
 
-        // Bandas
+        // Bands
         const bands = getEffectiveBands();
         let nextRow = 3;
 
-        // Placeholder "+ Nuevo release" cuando no hay uno pendiente.
+        // "+ New release" placeholder when there isn't a pending one.
         if (!pendingChanges.newSlice) {
           const ph = document.createElement('div');
           ph.className = 'slice-divider slice-divider-placeholder';
@@ -348,7 +348,7 @@
           const phBtn = document.createElement('button');
           phBtn.type = 'button';
           phBtn.className = 'slice-divider-label';
-          phBtn.textContent = '+ Nuevo release';
+          phBtn.textContent = '+ New release';
           phBtn.addEventListener('click', openNewReleaseModal);
           phWrap.appendChild(phBtn);
           ph.appendChild(phWrap);
@@ -357,7 +357,7 @@
         }
 
         bands.forEach(function (band) {
-          // Divisor + chip + acciones inline (sólo en el release pendiente)
+          // Divider + chip + inline actions (only on the pending release)
           const divider = document.createElement('div');
           let dividerCls = 'slice-divider';
           if (band.released) dividerCls += ' released';
@@ -381,7 +381,7 @@
             labelText.textContent = 'Backlog';
           } else {
             const statusSuffix = band.status ? ' · ' + (SLICE_STATUS_LABEL[band.status] || band.status) : '';
-            labelText.textContent = 'Versión ' + band.title + statusSuffix;
+            labelText.textContent = 'Version ' + band.title + statusSuffix;
           }
           label.appendChild(labelText);
 
@@ -408,20 +408,20 @@
 
           wrap.appendChild(label);
 
-          // Acciones inline para el release pendiente
+          // Inline actions for the pending release
           const isPendingBand = pendingChanges.newSlice && pendingChanges.newSlice.id === band.id;
           if (isPendingBand) {
             const generateBtn = document.createElement('button');
             generateBtn.type = 'button';
             generateBtn.className = 'slice-action primary';
-            generateBtn.textContent = 'Generar instrucción';
+            generateBtn.textContent = 'Generate instruction';
             generateBtn.addEventListener('click', openInstructionModal);
             wrap.appendChild(generateBtn);
 
             const cancelBtn = document.createElement('button');
             cancelBtn.type = 'button';
             cancelBtn.className = 'slice-action danger';
-            cancelBtn.textContent = 'Cancelar';
+            cancelBtn.textContent = 'Cancel';
             cancelBtn.addEventListener('click', openCancelConfirmModal);
             wrap.appendChild(cancelBtn);
           }
@@ -430,7 +430,7 @@
           grid.appendChild(divider);
           nextRow += 1;
 
-          // Fila de historias
+          // Stories row
           const storiesRow = nextRow;
           let c = 1;
           data.activities.forEach(function (act) {
@@ -507,7 +507,7 @@
                 if (bugCount > 0) {
                   const bugBadge = document.createElement('span');
                   bugBadge.className = 'us-bugs';
-                  bugBadge.title = bugCount + ' bug' + (bugCount === 1 ? '' : 's') + ' abierto' + (bugCount === 1 ? '' : 's');
+                  bugBadge.title = bugCount + ' open bug' + (bugCount === 1 ? '' : 's');
                   bugBadge.textContent = '🐞 ' + bugCount;
                   el.appendChild(bugBadge);
                 }
@@ -523,15 +523,15 @@
 
         updateHeaderChips();
 
-        // Doble tick para asegurar que el layout esté listo antes de medir.
+        // Double tick to make sure the layout is ready before measuring.
         requestAnimationFrame(function () {
           updateRowHeights();
           requestAnimationFrame(updateRowHeights);
         });
         currentStepId = null;
 
-        // Si el panel está abierto, re-marcar la historia seleccionada
-        // (el re-render borra la clase .selected).
+        // If the pane is open, re-mark the selected story
+        // (the re-render clears the .selected class).
         if (pane && pane.classList.contains('open')) {
           const currentId = decodeURIComponent(location.hash.replace(/^#/, ''));
           if (currentId) markStorySelected(currentId);
@@ -544,14 +544,14 @@
         const h = firstActivity.offsetHeight;
         if (h <= 0) return;
         grid.style.setProperty('--row1-height', h + 'px');
-        // También lo aplico directo a cada paso, sin depender de la variable.
+        // Also apply it directly to each step, without relying on the variable.
         grid.querySelectorAll('.cell.step').forEach(function (el) {
           el.style.top = h + 'px';
         });
       }
       window.addEventListener('resize', updateRowHeights);
 
-      // ===== Hover de columna =====
+      // ===== Column hover =====
       let currentStepId = null;
       function clearColumnHover() {
         if (!currentStepId) return;
@@ -592,7 +592,7 @@
         const bandId = e.currentTarget.dataset.bandId;
         const targetSlice = bandId === '__backlog__' ? null : bandId;
 
-        // Verifica que el cambio no sea redundante (drop en la banda de origen)
+        // Make sure the change is not redundant (drop on the origin band)
         const story = findStoryById(storyId);
         if (story && getEffectiveSlice(story) === targetSlice) return;
 
@@ -612,7 +612,7 @@
         return null;
       }
 
-      // ===== Panel lateral =====
+      // ===== Side pane =====
       const pane = document.getElementById('detail-pane');
       const paneContent = document.getElementById('pane-content');
       const paneClose = document.getElementById('pane-close');
@@ -641,7 +641,7 @@
         const main = document.querySelector('main');
         const rect = storyEl.getBoundingClientRect();
         const viewport = window.innerWidth;
-        // Ancho lógico del panel cuando está abierto (coincide con el CSS).
+        // Logical width of the pane when open (matches the CSS).
         const paneWidth = Math.max(360, viewport * 0.5);
         const visibleWidth = viewport - paneWidth;
         const visibleCenter = visibleWidth / 2;
@@ -652,12 +652,12 @@
         }
       }
 
-      // ===== Render de SPEC y BUG en el panel =====
-      // Cada item se muestra como una tarjeta colapsable con todas las
-      // secciones de la plantilla. Por defecto va abierto si el item
-      // está activo (ready/approved para SPEC; open/in-progress para BUG)
-      // y cerrado si ya está terminado (archived/fixed/wont-fix), para
-      // mantener el panel manejable cuando se acumulan.
+      // ===== Render SPEC and BUG in the pane =====
+      // Each item is shown as a collapsible card with all the template
+      // sections. Open by default if the item is active (ready/approved
+      // for SPEC; open/in-progress for BUG) and closed if it is already
+      // finished (archived/fixed/wont-fix), to keep the pane manageable
+      // when they pile up.
 
       function renderSubtaskList(items) {
         if (!Array.isArray(items) || items.length === 0) return '';
@@ -703,11 +703,11 @@
         // The pane shows the US status as the readiness signal — no separate
         // spec id/title/status row.
         let html = '<div class="pane-card spec-card spec-inline">';
-        html += renderTextSection('Contexto', story.context);
-        html += renderTextSection('Problema', story.problem);
-        html += renderTextSection('Restricciones', story.constraints);
+        html += renderTextSection('Context', story.context);
+        html += renderTextSection('Problem', story.problem);
+        html += renderTextSection('Constraints', story.constraints);
         if (Array.isArray(story.subtasks) && story.subtasks.length > 0) {
-          html += '<div class="card-section"><h4>Subtareas</h4>' +
+          html += '<div class="card-section"><h4>Subtasks</h4>' +
                   renderSubtaskList(story.subtasks) + '</div>';
         }
         html += renderTextSection('Edge cases', story.edgeCases);
@@ -723,15 +723,15 @@
         let html = '<details class="pane-card spec-card status-' + st + '"' +
                    (openByDefault ? ' open' : '') + '>';
         html +=   '<summary>';
-        html +=     '<span class="card-id">' + escapeHtml(spec.id || '(sin ID)') + '</span>';
+        html +=     '<span class="card-id">' + escapeHtml(spec.id || '(no ID)') + '</span>';
         html +=     '<span class="card-title">' + escapeHtml(spec.title || '') + '</span>';
         html +=     '<span class="card-status spec-' + st + '">' + escapeHtml(stLabel) + '</span>';
         html +=   '</summary>';
-        html += renderTextSection('Contexto', spec.context);
-        html += renderTextSection('Problema', spec.problem);
-        html += renderTextSection('Restricciones', spec.constraints);
+        html += renderTextSection('Context', spec.context);
+        html += renderTextSection('Problem', spec.problem);
+        html += renderTextSection('Constraints', spec.constraints);
         if (Array.isArray(spec.subtasks) && spec.subtasks.length > 0) {
-          html += '<div class="card-section"><h4>Subtareas</h4>' +
+          html += '<div class="card-section"><h4>Subtasks</h4>' +
                   renderSubtaskList(spec.subtasks) + '</div>';
         }
         html += renderTextSection('Edge cases', spec.edgeCases);
@@ -747,24 +747,24 @@
         let html = '<details class="pane-card bug-card status-' + st + '"' +
                    (openByDefault ? ' open' : '') + '>';
         html +=   '<summary>';
-        html +=     '<span class="card-id">' + escapeHtml(bug.id || '(sin ID)') + '</span>';
+        html +=     '<span class="card-id">' + escapeHtml(bug.id || '(no ID)') + '</span>';
         html +=     '<span class="card-title">' + escapeHtml(bug.title || '') + '</span>';
         html +=     '<span class="card-status bug-' + st + '">' + escapeHtml(stLabel) + '</span>';
         html +=   '</summary>';
         if (bug.foundAt) {
-          html += '<div class="card-meta">' + escapeHtml('Encontrado: ' + bug.foundAt) + '</div>';
+          html += '<div class="card-meta">' + escapeHtml('Found: ' + bug.foundAt) + '</div>';
         }
-        html += renderTextSection('Descripción', bug.description);
-        html += renderListSection('Pasos para reproducir', bug.stepsToReproduce);
-        html += renderTextSection('Resultado esperado', bug.expected);
-        html += renderTextSection('Resultado actual', bug.actual);
-        html += renderTextSection('Área afectada', bug.affectedArea);
-        html += renderTextSection('Causa raíz', bug.rootCause);
+        html += renderTextSection('Description', bug.description);
+        html += renderListSection('Steps to reproduce', bug.stepsToReproduce);
+        html += renderTextSection('Expected result', bug.expected);
+        html += renderTextSection('Actual result', bug.actual);
+        html += renderTextSection('Affected area', bug.affectedArea);
+        html += renderTextSection('Root cause', bug.rootCause);
         if (Array.isArray(bug.fix) && bug.fix.length > 0) {
           html += '<div class="card-section"><h4>Fix</h4>' +
                   renderSubtaskList(bug.fix) + '</div>';
         }
-        html += renderTextSection('Prueba de regresión', bug.regressionTest);
+        html += renderTextSection('Regression test', bug.regressionTest);
         html += renderTextSection('Done criteria', bug.doneCriteria);
         html += '</details>';
         return html;
@@ -802,19 +802,19 @@
         }
 
         if (story.rationale && story.rationale.trim()) {
-          html += '<div class="pane-section"><h3>¿Por qué importa?</h3><p>' + escapeHtml(story.rationale) + '</p></div>';
+          html += '<div class="pane-section"><h3>Why it matters</h3><p>' + escapeHtml(story.rationale) + '</p></div>';
         }
 
-        html += '<div class="pane-section"><h3>Narrativa</h3>';
+        html += '<div class="pane-section"><h3>Narrative</h3>';
         if (story.description && story.description.trim()) {
           html += '<p>' + escapeHtml(story.description) + '</p>';
         } else {
-          html += '<p class="placeholder">Pendiente de capturar.</p>';
+          html += '<p class="placeholder">Not captured yet.</p>';
         }
         html += '</div>';
 
         if (Array.isArray(story.acceptance) && story.acceptance.length > 0) {
-          html += '<div class="pane-section"><h3>Criterios de aceptación</h3><ul>';
+          html += '<div class="pane-section"><h3>Acceptance criteria</h3><ul>';
           story.acceptance.forEach(function (c) {
             html += '<li>' + escapeHtml(c) + '</li>';
           });
@@ -822,7 +822,7 @@
         }
 
         if (Array.isArray(story.tasks) && story.tasks.length > 0) {
-          html += '<div class="pane-section"><h3>Tareas</h3><ul class="pane-tasks">';
+          html += '<div class="pane-section"><h3>Tasks</h3><ul class="pane-tasks">';
           story.tasks.forEach(function (t) {
             const ts = t.status || 'done';
             const tsLabel = STATUS_LABEL[ts] || ts;
@@ -842,7 +842,7 @@
 
         const relatedSpecs = specs.filter(function (s) { return s.story === story.id; });
         if (relatedSpecs.length > 0) {
-          const heading = hasInlineSpec(story) ? 'SPECs adicionales' : 'SPECs relacionados';
+          const heading = hasInlineSpec(story) ? 'Additional SPECs' : 'Related SPECs';
           html += '<div class="pane-section"><h3>' + heading + '</h3>';
           relatedSpecs.forEach(function (s) { html += renderSpec(s); });
           html += '</div>';
@@ -850,7 +850,7 @@
 
         const relatedBugs = bugs.filter(function (b) { return b.story === story.id; });
         if (relatedBugs.length > 0) {
-          html += '<div class="pane-section"><h3>Bugs relacionados</h3>';
+          html += '<div class="pane-section"><h3>Related bugs</h3>';
           relatedBugs.forEach(function (b) { html += renderBug(b); });
           html += '</div>';
         }
@@ -885,8 +885,8 @@
         }
       });
 
-      // Click fuera del panel lo cierra (excepto si fue sobre una historia,
-      // que refresca el contenido; o sobre el panel mismo).
+      // Clicking outside the pane closes it (except on a story, which
+      // refreshes the content; or on the pane itself).
       document.addEventListener('click', function (e) {
         if (!pane.classList.contains('open')) return;
         if (e.target.closest('#detail-pane')) return;
@@ -895,7 +895,7 @@
         closePane();
       });
 
-      // ===== Modal genérico =====
+      // ===== Generic modal =====
       function openModal(html) {
         document.getElementById('modal-content').innerHTML = html;
         document.getElementById('modal-backdrop').setAttribute('aria-hidden', 'false');
@@ -908,18 +908,18 @@
         if (e.target === e.currentTarget) closeModal();
       });
 
-      // ===== Modales: Nuevo release / Instrucción / Cancelar =====
+      // ===== Modals: New release / Instruction / Cancel =====
       function openNewReleaseModal() {
         openModal(
-          '<h2>Nuevo release</h2>' +
-          '<p>Dale un nombre a la versión que vas a armar. Aparece como banda nueva arriba de las versiones liberadas y puedes empezar a arrastrar historias del Backlog hacia ella.</p>' +
+          '<h2>New release</h2>' +
+          '<p>Give the version you are about to build a name. It shows up as a new band above the released versions, and you can start dragging stories from the Backlog into it.</p>' +
           '<div>' +
-            '<label for="release-title">Nombre del release</label>' +
-            '<input type="text" id="release-title" placeholder="ej. v1.0" autocomplete="off">' +
+            '<label for="release-title">Release name</label>' +
+            '<input type="text" id="release-title" placeholder="e.g. v1.0" autocomplete="off">' +
           '</div>' +
           '<div class="modal-actions">' +
-            '<button type="button" class="btn-secondary" id="modal-cancel">Cancelar</button>' +
-            '<button type="button" class="btn-primary" id="modal-create">Crear</button>' +
+            '<button type="button" class="btn-secondary" id="modal-cancel">Cancel</button>' +
+            '<button type="button" class="btn-primary" id="modal-create">Create</button>' +
           '</div>'
         );
         const input = document.getElementById('release-title');
@@ -952,18 +952,18 @@
         if (moves.length > 0) instruction.moves = moves;
 
         const text =
-          'Aplicar al USM:\n\n' +
+          'Apply to the USM:\n\n' +
           '```json\n' +
           JSON.stringify(instruction, null, 2) + '\n' +
           '```';
 
         openModal(
-          '<h2>Instrucción para Lead</h2>' +
-          '<p>Copia este bloque y pégalo en el chat para que Claude lo aplique a <code>data.js</code>.</p>' +
+          '<h2>Instruction for Lead</h2>' +
+          '<p>Copy this block and paste it into the chat so Claude applies it to <code>data.js</code>.</p>' +
           '<textarea id="instruction-text" readonly></textarea>' +
           '<div class="modal-actions">' +
-            '<button type="button" class="btn-secondary" id="modal-close-btn">Cerrar</button>' +
-            '<button type="button" class="btn-primary" id="modal-copy-btn">Copiar al portapapeles</button>' +
+            '<button type="button" class="btn-secondary" id="modal-close-btn">Close</button>' +
+            '<button type="button" class="btn-primary" id="modal-copy-btn">Copy to clipboard</button>' +
           '</div>'
         );
         const ta = document.getElementById('instruction-text');
@@ -975,8 +975,8 @@
           if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(ta.value).then(function () {
               const btn = document.getElementById('modal-copy-btn');
-              btn.textContent = '✓ Copiado';
-              setTimeout(function () { btn.textContent = 'Copiar al portapapeles'; }, 1500);
+              btn.textContent = '✓ Copied';
+              setTimeout(function () { btn.textContent = 'Copy to clipboard'; }, 1500);
             });
           } else {
             document.execCommand('copy');
@@ -988,16 +988,16 @@
         const moveCount = Object.keys(pendingChanges.moves).length;
         const hasNew = !!pendingChanges.newSlice;
         const pieces = [];
-        if (hasNew) pieces.push('el release nuevo');
-        if (moveCount > 0) pieces.push(moveCount + ' historia' + (moveCount === 1 ? '' : 's') + ' movida' + (moveCount === 1 ? '' : 's'));
-        const lostStr = pieces.length > 0 ? pieces.join(' y ') : 'los cambios pendientes';
+        if (hasNew) pieces.push('the new release');
+        if (moveCount > 0) pieces.push(moveCount + ' moved stor' + (moveCount === 1 ? 'y' : 'ies'));
+        const lostStr = pieces.length > 0 ? pieces.join(' and ') : 'the pending changes';
 
         openModal(
-          '<h2>Descartar cambios pendientes</h2>' +
-          '<p>Vas a perder ' + lostStr + '. Esta acción no se puede deshacer. ¿Continuamos?</p>' +
+          '<h2>Discard pending changes</h2>' +
+          '<p>You are about to lose ' + lostStr + '. This action cannot be undone. Continue?</p>' +
           '<div class="modal-actions">' +
-            '<button type="button" class="btn-secondary" id="cancel-no">No, mantener</button>' +
-            '<button type="button" class="btn-primary" id="cancel-yes">Sí, descartar</button>' +
+            '<button type="button" class="btn-secondary" id="cancel-no">No, keep them</button>' +
+            '<button type="button" class="btn-primary" id="cancel-yes">Yes, discard</button>' +
           '</div>'
         );
         document.getElementById('cancel-no').addEventListener('click', closeModal);
@@ -1010,7 +1010,7 @@
         });
       }
 
-      // ===== Hash directo a una historia al cargar =====
+      // ===== Direct hash to a story on load =====
       function openFromHashIfMatch() {
         const id = decodeURIComponent(location.hash.replace(/^#/, ''));
         if (!id) return;
@@ -1065,7 +1065,7 @@
           }
         }, true);
 
-        // Ctrl + rueda del mouse = scroll horizontal
+        // Ctrl + mouse wheel = horizontal scroll
         container.addEventListener('wheel', function (e) {
           if (e.ctrlKey) {
             e.preventDefault();
@@ -1074,7 +1074,7 @@
         }, { passive: false });
       })();
 
-      // ===== Chips del header: filtro de bugs y bandeja =====
+      // ===== Header chips: bugs filter and tray =====
       document.getElementById('bugs-chip').addEventListener('click', function () {
         const active = grid.classList.toggle('filter-bugs-only');
         this.setAttribute('aria-pressed', String(active));
@@ -1084,21 +1084,21 @@
       function openTrayPane() {
         const tray = trayItems();
         let html = '';
-        html += '<div class="pane-breadcrumb">Bandeja</div>';
-        html += '<h2 class="pane-title" id="pane-title">Sin asignar</h2>';
+        html += '<div class="pane-breadcrumb">Tray</div>';
+        html += '<h2 class="pane-title" id="pane-title">Unassigned</h2>';
 
         if (tray.drafts.length > 0) {
-          html += '<div class="pane-section"><h3>Borradores de SPEC</h3>';
+          html += '<div class="pane-section"><h3>SPEC drafts</h3>';
           tray.drafts.forEach(function (s) { html += renderSpec(s); });
           html += '</div>';
         }
         if (tray.orphanBugs.length > 0) {
-          html += '<div class="pane-section"><h3>Bugs sin historia</h3>';
+          html += '<div class="pane-section"><h3>Bugs without a story</h3>';
           tray.orphanBugs.forEach(function (b) { html += renderBug(b); });
           html += '</div>';
         }
         if (tray.drafts.length === 0 && tray.orphanBugs.length === 0) {
-          html += '<p class="placeholder">Nada en bandeja.</p>';
+          html += '<p class="placeholder">Nothing in the tray.</p>';
         }
 
         paneContent.innerHTML = html;
@@ -1109,8 +1109,23 @@
         paneClose.focus();
       }
 
-      // ===== Render inicial =====
+      // ===== Project name → document title + heading =====
+      // The title is per-project: `data.project` comes from
+      // source/skeleton.json (set on init to the repo name). Falls back to
+      // "af" when unset so the bare template still reads sensibly.
+      function applyProjectName() {
+        const name = (typeof data.project === 'string' && data.project.trim())
+          ? data.project.trim()
+          : 'af';
+        const title = name + ' — User Story Map';
+        document.title = title;
+        const heading = document.getElementById('usm-heading');
+        if (heading) heading.textContent = title;
+      }
+
+      // ===== Initial render =====
       loadPendingChanges();
+      applyProjectName();
       renderMap();
       if (location.hash === '#tray') openTrayPane();
       else openFromHashIfMatch();

@@ -24,7 +24,7 @@ effort: high
    - Activity and Step `id`s are short, kebab-case, and stable (they appear in URLs and analytics if any). `title` is the human label.
 3. If `skeleton.json` already has Activities, **extend** rather than replace: append new Activities and Steps. Preserve every existing entry verbatim.
 4. Show the PM the proposed delta (which Activities and Steps will be added or updated), confirm.
-5. On confirmation, write `.af/docs/usm/source/skeleton.json` with the merged backbone. The skeleton holds only `{ activities: [{ id, title, steps: [{ id, title }] }] }` — no stories. Stories are filed in their own files under `source/stories/` by `/af-create-story` and joined to the backbone by their `step` field at build time.
+5. On confirmation, write `.af/docs/usm/source/skeleton.json` with the merged backbone. The skeleton holds `{ project, activities: [{ id, title, steps: [{ id, title }] }] }` — no stories. **Preserve the existing top-level `project` field verbatim** (it titles the USM viewer; `/af-init` sets it to the repo name). Stories are filed in their own files under `source/stories/` by `/af-create-story` and joined to the backbone by their `step` field at build time.
 6. Run `python3 .af/bin/build-usm.py` so the generated `data.js` (and `source/INDEX.md`) reflect the new backbone. The HTML USM picks it up on next reload.
 
 **Output:** Summary of Activities and Steps added or modified, the file written (`.af/docs/usm/source/skeleton.json`), and a note that the bundles were regenerated.

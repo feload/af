@@ -94,7 +94,8 @@ def main() -> None:
     for slice_ in data["slices"]:
         write_json(SOURCE / "releases" / f"{slice_['id']}.json", slice_)
 
-    skeleton = {"activities": []}
+    # The viewer titles the page from `project`; default it to the repo name.
+    skeleton = {"project": Path.cwd().name, "activities": []}
     index_rows: list[tuple[str, ...]] = []
     story_count = 0
 

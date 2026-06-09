@@ -190,7 +190,7 @@ header p {
   .bugs-chip[aria-pressed="true"] .chip-label { color: #fecaca; }
 }
 
-/* Cuando el filtro de bugs está activo, oculta las US sin bugs abiertos. */
+/* When the bugs filter is active, hide US without open bugs. */
 .usm-grid.filter-bugs-only .story:not(.has-open-bugs) { display: none; }
 
 .legend-item { display: inline-flex; align-items: center; gap: 6px; }
@@ -276,12 +276,12 @@ main.dragging [role="button"] {
   font-size: 0.75rem;
 }
 
-/* Resaltado de columna al hover */
+/* Column highlight on hover */
 .step.col-hover {
   filter: brightness(1.18);
 }
 
-/* Overlay continuo que cubre toda la columna detrás de las celdas */
+/* Continuous overlay covering the whole column behind the cells */
 .col-overlay {
   background: transparent;
   border-radius: 4px;
@@ -436,7 +436,7 @@ main.dragging [role="button"] {
 
 .story.released { opacity: 0.55; }
 .story.released:hover { opacity: 0.85; }
-/* Una US liberada con bugs abiertos no se atenúa — debe destacar. */
+/* A released US with open bugs is not dimmed — it should stand out. */
 .story.released.has-open-bugs { opacity: 1; }
 
 .story-cell {
@@ -623,7 +623,7 @@ a.story:hover {
 
 .back-link:hover { text-decoration: underline; }
 
-/* ===== Detail pane (lateral derecho, muestra historia seleccionada) ===== */
+/* ===== Detail pane (right side, shows the selected story) ===== */
 
 .detail-pane {
   position: fixed;
@@ -781,7 +781,7 @@ a.story:hover {
 .task-status.done     { background: var(--status-done-bg);     border-color: var(--status-done-border); }
 .task-status.dropped  { background: var(--status-dropped-bg);  border-color: var(--status-dropped-border); color: var(--color-text-muted); }
 
-/* ===== Tarjetas SPEC / BUG en el panel ===== */
+/* ===== SPEC / BUG cards in the pane ===== */
 
 .pane-card {
   border: 1px solid var(--color-border);
@@ -944,7 +944,7 @@ a.story:hover {
   text-decoration: line-through;
 }
 
-/* ===== Modal genérico ===== */
+/* ===== Generic modal ===== */
 
 .modal-backdrop {
   position: fixed;
@@ -1024,7 +1024,7 @@ a.story:hover {
   gap: 8px;
 }
 
-/* ===== Chip de cambios pendientes ===== */
+/* ===== Pending changes chip ===== */
 
 .pending-chip {
   position: fixed;

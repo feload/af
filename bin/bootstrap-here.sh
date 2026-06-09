@@ -65,12 +65,18 @@ copy_file "bin/build-usm.py"         ".af/bin/build-usm.py"
 copy_file "hooks/pre-commit"         ".af/hooks/pre-commit"
 chmod +x .af/bin/build-usm.py .af/hooks/pre-commit 2>/dev/null || true
 
+# Title the USM per-project: default the name to the repo directory.
+# JSON-escape backslashes and double quotes so odd directory names are safe.
+PROJECT_NAME=$(basename "$(pwd)")
+PROJECT_NAME_ESC=$(printf '%s' "$PROJECT_NAME" | sed 's/\\/\\\\/g; s/"/\\"/g')
+
 if write_inline ".af/docs/usm/source/skeleton.json"; then
-    cat > .af/docs/usm/source/skeleton.json <<'SKELETON_EOF'
+    cat > .af/docs/usm/source/skeleton.json <<EOF
 {
+  "project": "${PROJECT_NAME_ESC}",
   "activities": []
 }
-SKELETON_EOF
+EOF
     printf "  write  .af/docs/usm/source/skeleton.json\n"
 fi
 

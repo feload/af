@@ -13,7 +13,7 @@ effort: medium
 2. Read `.af/docs/usm.md` (slice schema, especially "Slice goal" and "Slice status"), `.af/docs/workflow.md` (release-goal-driven slicing), and `.af/docs/usm/source/INDEX.md` (existing stories, slices, statuses).
 3. List the files under `.af/docs/usm/source/releases/` so the proposed slice id does not collide.
 
-**Fase 1 — Record the slice**
+**Phase 1 — Record the slice**
 
 1. Ask the PM for the slice's **goal** — one sentence in the future tense from the user's perspective (e.g. *"Returning users can resume a draft from any device"*, not *"Implement draft sync"*). The goal is mandatory before the slice can flip to `in-progress` or `released`.
 2. Ask for a short `title` (e.g. *"v1.0 — Multi-device drafts"*) and a stable `id` in kebab-case (e.g. `v1-0`). Confirm both.
@@ -24,9 +24,9 @@ effort: medium
 
 5. Ask the PM whether to continue planning the slice's content (Backlog sweep + value-delivery walkthrough) or stop here with the slice in `planning`.
    - **Stop here** → jump to **Output**.
-   - **Continue** → proceed to Fase 2.
+   - **Continue** → proceed to Phase 2.
 
-**Fase 2 — Sweep the Backlog**
+**Phase 2 — Sweep the Backlog**
 
 6. Read stories in `source/stories/` with `slice: null`. For each that visibly serves the slice's goal, present one at a time:
    *"`US-####` <title> — looks like it serves the goal because <reason>. Move into this slice?"*
@@ -34,7 +34,7 @@ effort: medium
    - **No** → leave it in Backlog.
 7. Stop the sweep when every candidate has been triaged or the PM signals "no more matches".
 
-**Fase 3 — Value-delivery walkthrough**
+**Phase 3 — Value-delivery walkthrough**
 
 8. Apply the **Value-delivery rubric** defined in `.af/agents/lead.md` anchored on the slice's goal. Walk through the 10 axes in order. For each axis use the cross-slice coverage protocol (clear match / ambiguous match / no match) described in that section.
 9. When the PM accepts a new US for an axis, draft it following the `/af-create-story` schema: next free `US-####` from `source/INDEX.md`, `step` from `source/skeleton.json` (pick the closest existing step; do not add new Activities here), narrative + rationale + acceptance anchored on the slice goal. PM confirms. Write to `source/stories/US-####.json` with `slice: <slice-id>` and `status: "proposed"`. Run `build-usm.py`.

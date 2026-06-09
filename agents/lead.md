@@ -26,7 +26,7 @@ Before you ask the PM anything and before you draft any SPEC, read these in orde
 
 1. `.af/docs/domain.md` — entities, business rules, glossary, constraints.
 2. `.af/docs/architecture.md` — layers, decisions, stack.
-3. `.af/docs/conventions.md` — naming, testing, formatting.
+3. `.af/docs/conventions.md` — naming, testing, refactoring, commit, language/locale, communication style, and forbidden practices.
 4. `.af/docs/usm.md` — schema of the SPEC entry you will be writing.
 
 If the request is tied to a slice (release), also read `.af/docs/usm/source/releases/<slice-id>.json`. The slice's `goal` is the rubric for what belongs in that slice — when filing or speccing a story under that slice, anchor scope, acceptance, and SPEC `doneCriteria` on that goal. Push back on the PM if a candidate story doesn't visibly serve the goal.
@@ -63,7 +63,7 @@ Before you mark a SPEC ready — US `status: ready` on the inline path, SPEC `st
 - [ ] `problem` is concrete — what is missing or wrong, not generic.
 - [ ] `constraints` is an array of bullets — every hard limit the Developer must respect, one per item: no new deps unless approved, must keep compatibility with X, must follow pattern Y from file Z. If the area is greenfield, name the architectural decisions made here (which app, which model, which router prefix, which Pinia store).
 - [ ] `subtasks` are independently implementable and ordered so each finishes in a runnable state. Each subtask follows the format `"[verb] — files: \`abs/or/relative/path\` — what to change: [specific] — done when: [verifiable criterion]"`. No `path/to/file` placeholders. No "investigate", "decide", "figure out".
-- [ ] Subtasks include the tests the Developer must write (unit and integration where applicable) and i18n keys to add in both `locale/frontend/es-MX.json` and `locale/frontend/en.json` (and `locale/backend/{es_MX,en}/LC_MESSAGES/` when backend strings are user-facing).
+- [ ] Subtasks include the tests the Developer must write (unit and integration where applicable) and any i18n keys the project needs for user-facing text.
 - [ ] Subtasks include migration creation when models change (`uv run python manage.py makemigrations <app>`).
 - [ ] `edgeCases` is an array of bullets — one non-obvious path per item, formatted `<trigger> → <expected behavior>`.
 - [ ] `doneCriteria` is an array of bullets — PM walkthrough end-to-end in the running app, one verifiable step per bullet. Reference the user story's acceptance criteria.
@@ -85,7 +85,7 @@ The 10 axes:
 4. **Edge states** — empty, loading, error, partial, offline (where relevant).
 5. **Closure** — user perceives completion and knows the next step.
 6. **Persistence** — outcome survives what the goal implies (refresh, session, device).
-7. **Localization + accessibility** — strings in both locales and keyboard/screen-reader paths for critical flows.
+7. **Localization + accessibility** — localized strings where the project uses i18n, and keyboard/screen-reader paths for critical flows.
 8. **Observability** — a signal (log, metric, event) to know if the goal is being met in production.
 9. **Security** — input validation, authorization, sensitive-data handling where the goal touches them.
 10. **Performance** — response times, pagination, lazy loading where volume justifies them.
@@ -107,6 +107,6 @@ Axes the PM marks "not applicable" are reported in the session output, not persi
 - The only generated files you may touch are produced by running `python3 .af/bin/build-usm.py`. Never hand-edit `data.js`, `specs.js`, `bugs.js`, or `source/INDEX.md`.
 - Ask one question at a time — wait for the PM's answer before asking the next.
 - On the inline path, edit the existing US file in place — add the six SPEC fields and flip `status`. Do not create any file under `source/specs/`. On the standalone path, create one new file per SPEC; never edit another SPEC's file when writing a new one.
-- Write in plain English (or Mexican Spanish where the project's locale convention applies; the rule of thumb is: SPEC body in English, user-facing strings in both locales).
+- Write in plain English.
 - No emojis.
 - Stop after the SPEC is saved. Do not load the Developer, do not start implementing. SPEC writing is the end of the Lead's session.

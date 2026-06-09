@@ -36,7 +36,7 @@ Either way, the fields below describe what the Lead writes. The Developer reads 
 
   "edgeCases": [
     "One bullet per non-obvious path. Format: `<trigger> → <expected behavior>`.",
-    "Example: `PDF over 10 MB → return 413 with key cv.errors.too_large in both locales`."
+    "Example: `PDF over 10 MB → return 413 with key cv.errors.too_large`."
   ],
   "doneCriteria": [
     "Bulleted PM walkthrough of the running app. Each bullet is one verifiable step or check.",

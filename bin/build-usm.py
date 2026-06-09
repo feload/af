@@ -66,6 +66,10 @@ def build_data() -> None:
         activities.append({**activity, "steps": steps})
 
     payload = {"slices": releases, "activities": activities}
+    # The viewer reads `project` to title the page per-host. Carry it
+    # through from the skeleton (set on init to the repo name) when present.
+    if skeleton.get("project"):
+        payload = {"project": skeleton["project"], **payload}
     write_js(ROOT / "data.js", "USM_DATA", payload)
     total = sum(len(s["stories"]) for a in activities for s in a["steps"])
     print(f"wrote data.js — {len(releases)} releases, {len(activities)} activities, {total} stories")

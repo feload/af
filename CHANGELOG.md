@@ -2,6 +2,16 @@
 
 All notable changes to the af framework are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## v0.13.0 — 2026-06-09
+
+### Added
+- **Per-project USM title.** `source/skeleton.json` gains an optional `project` field. The viewer titles the page and its `<h1>` as `"<project> — User Story Map"`, falling back to `af` when unset. `/af-init` (via `bootstrap-here.sh`) seeds it with the repo directory name; `/af-update` (via `update-here.sh`) backfills it for hosts that predate the field; `migrate-data-to-source.py` sets it on migrated hosts; `build-usm.py` carries it into `data.js`. `/af-create-backbone` now preserves the field when rewriting the skeleton. Documented in `docs/usm.md`.
+- **Opinionated defaults in `docs/conventions.md`.** Testing, Refactoring, Commit, Language/Locale, Communication Style and Forbidden Practices now ship with stack-agnostic defaults instead of empty placeholders. `/af-init` fills only the remaining `[...]` placeholders and preserves the prose defaults. The Developer agent now reads `conventions.md` (it never did), so commit/communication/forbidden rules reach the agent that writes code and PRs.
+
+### Changed
+- **English-only.** Translated the USM viewer (`docs/usm/index.html`, `docs/usm/styles.css`) from Spanish to English and rebranded its title from "Fredo" to the per-project/`af` default. Removed Spanish and bilingual-locale assumptions from the framework: `agents/lead.md` no longer hardcodes `es-MX`/`en` i18n files or "both locales", `templates/spec.md` drops the "in both locales" example, `conventions.md` sets agent responses to English, and the slice commands rename "Fase" → "Phase".
+- The USM viewer's `localStorage` key is renamed `fredo_usm_pending_v2` → `af_usm_pending_v2`. Any unsaved drag-and-drop changes pending at update time are dropped (transient UI state only).
+
 ## v0.12.0 — 2026-05-16
 
 ### Changed (breaking)
@@ -12,7 +22,7 @@ All notable changes to the af framework are documented here. Format follows [Kee
 - `/af-review-slice` readiness table is reworded so a row resolves to `ready` when the US itself is at `status: ready` (inline) **or** any of its linked SPECs is `ready`.
 
 ### Added
-- USM viewer renders inline SPEC content on the story panel as a `SPEC` section above the (now optional) `SPECs adicionales` block. The `ready` US status gets its own swatch in the header legend, a blue tile background on the map, and a status badge on the panel.
+- USM viewer renders inline SPEC content on the story panel as a `SPEC` section above the (now optional) `Additional SPECs` block. The `ready` US status gets its own swatch in the header legend, a blue tile background on the map, and a status badge on the panel.
 - `source/INDEX.md` story table gains a `Spec` column: `inline`, `external (N)`, `inline + N ext`, or `—`.
 
 ## v0.11.0 — 2026-05-16
@@ -22,7 +32,7 @@ All notable changes to the af framework are documented here. Format follows [Kee
 - `/af-review-slice <slice-id>` slash command (sonnet/medium). Readiness check before flipping a slice to `in-progress`: prints a US-by-US readiness table (SPEC status: `no SPEC` / `pending Lead` / `pending PM` / `ready` / `approved` / `archived`), reruns the value-delivery rubric as a delta against the current state of the slice, asks about scope changes, and prints a verdict — *ready to flip* or *pendings before flip*. Does not edit the slice's `status` (PM does that manually) and does not write SPECs.
 
 ### Changed
-- `/af-create-slice` now offers a content-planning continuation after recording the slice. Fase 1 is unchanged — capture `{id, title, goal, status}` and write `source/releases/<slice-id>.json`. After confirmation it asks whether to continue. If yes: Fase 2 sweeps `source/stories/` for Backlog candidates and moves the ones that visibly serve the goal into the slice one-by-one; Fase 3 walks the 10-axis Value-delivery rubric anchored on the goal and, for each gap, proposes a new US (PM confirms one-by-one before any file is written). The PM can stop after Fase 1 and resume later — the slice stays in `planning`. The previous Stop after writing the slice file is preserved as the early-exit path.
+- `/af-create-slice` now offers a content-planning continuation after recording the slice. Phase 1 is unchanged — capture `{id, title, goal, status}` and write `source/releases/<slice-id>.json`. After confirmation it asks whether to continue. If yes: Phase 2 sweeps `source/stories/` for Backlog candidates and moves the ones that visibly serve the goal into the slice one-by-one; Phase 3 walks the 10-axis Value-delivery rubric anchored on the goal and, for each gap, proposes a new US (PM confirms one-by-one before any file is written). The PM can stop after Phase 1 and resume later — the slice stays in `planning`. The previous Stop after writing the slice file is preserved as the early-exit path.
 - `docs/workflow.md` updated: the Flow diagram now lists `/af-review-slice` between SPEC drafting and implementation; the Slices bullet (under *Domain first, then backbone, then stories*) names the rubric; the Session focus list adds `/af-review-slice` and rewrites the `/af-create-slice` bullet to describe the three-phase flow.
 
 ## v0.10.0 — 2026-05-15

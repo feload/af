@@ -545,8 +545,10 @@
         if (h <= 0) return;
         grid.style.setProperty('--row1-height', h + 'px');
         // Also apply it directly to each step, without relying on the variable.
+        // Add the 8px grid gap so the step row stays the same distance below the
+        // activity row when both are stuck (matches the CSS calc above).
         grid.querySelectorAll('.cell.step').forEach(function (el) {
-          el.style.top = h + 'px';
+          el.style.top = (h + 8) + 'px';
         });
       }
       window.addEventListener('resize', updateRowHeights);
@@ -680,6 +682,9 @@
       }
 
       function renderListSection(label, items) {
+        // The schema mandates arrays of strings, but tolerate a legacy bare
+        // string by treating it as a single-item list rather than dropping it.
+        if (typeof items === 'string') items = items.trim() ? [items] : [];
         if (!Array.isArray(items) || items.length === 0) return '';
         let html = '<div class="card-section"><h4>' + escapeHtml(label) + '</h4><ol>';
         items.forEach(function (s) { html += '<li>' + escapeHtml(s) + '</li>'; });
@@ -705,13 +710,13 @@
         let html = '<div class="pane-card spec-card spec-inline">';
         html += renderTextSection('Context', story.context);
         html += renderTextSection('Problem', story.problem);
-        html += renderTextSection('Constraints', story.constraints);
+        html += renderListSection('Constraints', story.constraints);
         if (Array.isArray(story.subtasks) && story.subtasks.length > 0) {
           html += '<div class="card-section"><h4>Subtasks</h4>' +
                   renderSubtaskList(story.subtasks) + '</div>';
         }
-        html += renderTextSection('Edge cases', story.edgeCases);
-        html += renderTextSection('Done criteria', story.doneCriteria);
+        html += renderListSection('Edge cases', story.edgeCases);
+        html += renderListSection('Done criteria', story.doneCriteria);
         html += '</div>';
         return html;
       }
@@ -729,13 +734,13 @@
         html +=   '</summary>';
         html += renderTextSection('Context', spec.context);
         html += renderTextSection('Problem', spec.problem);
-        html += renderTextSection('Constraints', spec.constraints);
+        html += renderListSection('Constraints', spec.constraints);
         if (Array.isArray(spec.subtasks) && spec.subtasks.length > 0) {
           html += '<div class="card-section"><h4>Subtasks</h4>' +
                   renderSubtaskList(spec.subtasks) + '</div>';
         }
-        html += renderTextSection('Edge cases', spec.edgeCases);
-        html += renderTextSection('Done criteria', spec.doneCriteria);
+        html += renderListSection('Edge cases', spec.edgeCases);
+        html += renderListSection('Done criteria', spec.doneCriteria);
         html += '</details>';
         return html;
       }
@@ -765,7 +770,7 @@
                   renderSubtaskList(bug.fix) + '</div>';
         }
         html += renderTextSection('Regression test', bug.regressionTest);
-        html += renderTextSection('Done criteria', bug.doneCriteria);
+        html += renderListSection('Done criteria', bug.doneCriteria);
         html += '</details>';
         return html;
       }

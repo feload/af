@@ -264,8 +264,13 @@ main.dragging [role="button"] {
   font-size: 0.8rem;
   font-weight: 500;
   position: sticky;
-  top: var(--row1-height, 60px);
+  /* Offset by the 8px grid gap so the step row keeps the same spacing below
+     the activity row when both are stuck, instead of sliding up to touch it.
+     The upward box-shadow fills that restored gap with the page background so
+     scrolling stories don't bleed through it. */
+  top: calc(var(--row1-height, 60px) + 8px);
   z-index: 9;
+  box-shadow: 0 -8px 0 var(--color-bg);
 }
 
 .step.empty {

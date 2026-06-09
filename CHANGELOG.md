@@ -2,6 +2,12 @@
 
 All notable changes to the af framework are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## v0.13.1 — 2026-06-09
+
+### Fixed
+- **Constraints, edge cases and done criteria now render as lists.** The viewer rendered these array fields through `renderTextSection`, which coerced the array to a string and showed it as one comma-joined paragraph. They now use `renderListSection` (a proper `<ol>`) on inline SPECs, standalone SPECs, and a bug's done criteria — matching the schema, which mandates arrays of strings. `renderListSection` also tolerates a legacy bare string by treating it as a single-item list instead of dropping it.
+- **Sticky step row keeps its gap below the activities.** When scrolling the map, the step row's sticky offset equalled the activity row's exact height, so the 8px grid gap collapsed and the steps slid up to touch the activities. The step row now sticks 8px lower (matching the grid gap) with an upward page-colored shadow filling the restored gap, so the activity/step spacing looks the same scrolled or not.
+
 ## v0.13.0 — 2026-06-09
 
 ### Added

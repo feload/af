@@ -25,7 +25,7 @@ For the public-facing description, see [README.md](README.md).
 
 All af slash commands use the `af-*` prefix, regardless of whether they drive a workflow phase or manage the framework install. Two categories share the prefix:
 
-- **Workflow commands:** `/af-create-backbone`, `/af-create-slice`, `/af-review-slice`, `/af-create-story`, `/af-create-spec`, `/af-create-bug`, `/af-implement-spec`, `/af-fix-bug`. Each maps to one phase of the workflow.
+- **Workflow commands:** `/af-create-backbone`, `/af-create-slice`, `/af-review-slice`, `/af-create-story`, `/af-create-spec`, `/af-create-bug`, `/af-implement-spec`, `/af-implement-slice`, `/af-fix-bug`. Each maps to one phase of the workflow — `/af-implement-slice` is the one deliberate exception, batching a whole release through implementation in a single run.
 - **Lifecycle commands:** `/af-init`, `/af-update` (and any future `/af-remove`). These manage the framework install in a host, not the workflow.
 
 When adding a new command, use the `af-` prefix and pick a verb that makes its category obvious.

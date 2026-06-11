@@ -27,6 +27,7 @@ PM: /af-create-story → US-####.json proposed in source/stories/ (slice: <slice
 PM: /af-create-spec → Lead writes SPEC content inline on the US (or, for cross-cutting / multi-SPEC work, a SPEC-####.json under source/specs/) → PM confirms → US status: ready (or SPEC status: ready for the standalone path)
 PM: /af-review-slice <slice-id> → readiness table + rubric delta + verdict → PM flips slice to in-progress when ready
 Developer: /af-implement-spec <US-####|SPEC-####> → implements subtasks + tests → hands off test tree + run commands
+            (or /af-implement-slice <slice-id> → implements every ready US in the slice back-to-back on one branch → single combined handoff)
 PM: review + run tests → US status: done (or SPEC status: approved)
 Developer: create PR
 PM: approve PR → entry stays as a record (US done, SPEC archived)
@@ -141,6 +142,7 @@ Each command does one phase of the workflow and stops. The agent does not auto-p
 - `/af-create-spec` writes SPEC content. By default it edits the US file in place, adding the six inline SPEC fields and flipping US `status` to `ready` on confirmation. Falls back to a standalone file under `source/specs/SPEC-XXXX.json` for cross-cutting work (`story: null`) or when the PM explicitly wants the US split across multiple SPECs. It does not implement.
 - `/af-create-bug` writes a BUG as a new file in `source/bugs/`. It does not fix.
 - `/af-implement-spec` implements either a US with `status: ready` (inline SPEC path) or a standalone SPEC with `status: ready` from `source/specs/`. It does not pick up another work item.
+- `/af-implement-slice <slice-id>` is the one command that deliberately breaks the single-phase rule: it implements every ready US in an `in-progress` slice back-to-back, in backbone order, on one `feat/<slice-id>` branch, with no PM stop between stories, then produces one combined handoff. It skips US that are not `ready` (they need `/af-create-spec` first), halts on a genuine blocker, and leaves the implemented US `active` for the PM's review — it never writes SPECs and never flips a US to `done`.
 - `/af-fix-bug` fixes an `in-progress` (or `open`, after confirmation) BUG from `source/bugs/` and writes a regression test. It does not pick up another BUG.
 
 Keep sessions focused on a single phase. This keeps scope and review boundaries crisp.

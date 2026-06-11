@@ -20,6 +20,7 @@ commands/af-create-story.md          .claude/commands/af-create-story.md
 commands/af-create-spec.md           .claude/commands/af-create-spec.md
 commands/af-create-bug.md            .claude/commands/af-create-bug.md
 commands/af-implement-spec.md        .claude/commands/af-implement-spec.md
+commands/af-implement-slice.md       .claude/commands/af-implement-slice.md
 commands/af-fix-bug.md               .claude/commands/af-fix-bug.md
 commands/af-init.md                  .claude/commands/af-init.md
 commands/af-update.md                .claude/commands/af-update.md

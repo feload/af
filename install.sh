@@ -197,7 +197,8 @@ This project uses the **af** AI-assisted development framework.
   `.af/docs/usm/source/specs/SPEC-XXXX.json` (or
   `.af/docs/usm/source/bugs/BUG-XXXX.json` for bugs). PM confirms.
 - The Developer implements via `/af-implement-spec` or `/af-fix-bug`,
-  reading the SPEC file directly from `source/`.
+  reading the SPEC file directly from `source/`. `/af-implement-slice
+  <slice-id>` implements a whole release in one run.
 - PM approves; PR is opened; SPEC `status` flips to `archived` (or bug
   `status` to `fixed`) in the same JSON file.
 

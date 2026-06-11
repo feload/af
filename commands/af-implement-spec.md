@@ -10,9 +10,10 @@
 2. Locate the work item:
    - If the argument is `US-XXXX`: open `.af/docs/usm/source/stories/US-XXXX.json` (find the path via `.af/docs/usm/source/INDEX.md` if needed). Verify the US `status` is `"ready"` and that it carries inline SPEC fields (`subtasks` at minimum). If the US is `ready` because of linked standalone SPECs only (no inline `subtasks`), stop and ask the PM which standalone SPEC to implement.
    - If the argument is `SPEC-XXXX`: open `.af/docs/usm/source/specs/SPEC-XXXX.json`. Verify `status` is `"ready"`. Do not read `.af/docs/usm/specs.js`; it is a generated artifact.
-3. **Mark the work item active.** For the inline path, flip the US `status` from `ready` to `active`. For the standalone path, leave the SPEC at `ready` (the SPEC's lifecycle has no `active` value — the linked US, if any, can be flipped to `active` by the PM separately).
-4. Implement subtasks in order, flipping each `done` to `true` in the same JSON file when complete. Run `python3 .af/bin/build-usm.py` after edits so the bundles stay in sync (the pre-commit hook does this for you on commit if `git config core.hooksPath .af/hooks` is set).
-5. Notify PM when all subtasks are complete (hand off the test tree + run commands per `.af/agents/developer.md`).
+3. **Create the branch.** From `main`, run `git checkout -b feat/<ID>` (the work item's `US-XXXX` or `SPEC-XXXX` id) so every commit for this work lands on a dedicated branch instead of `main`.
+4. **Mark the work item active.** For the inline path, flip the US `status` from `ready` to `active`. For the standalone path, leave the SPEC at `ready` (the SPEC's lifecycle has no `active` value — the linked US, if any, can be flipped to `active` by the PM separately).
+5. Implement subtasks in order, flipping each `done` to `true` in the same JSON file when complete. Run `python3 .af/bin/build-usm.py` after edits so the bundles stay in sync (the pre-commit hook does this for you on commit if `git config core.hooksPath .af/hooks` is set).
+6. Notify PM when all subtasks are complete (hand off the test tree + run commands per `.af/agents/developer.md`).
 
 **Output:** Changed source files + the updated work item file (US or SPEC) + regenerated bundles. PM must accept before the PR is created:
 

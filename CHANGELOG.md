@@ -2,6 +2,14 @@
 
 All notable changes to the af framework are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## v0.14.0 — 2026-06-11
+
+### Added
+- `/af-implement-slice <slice-id>` slash command. Implements an entire release (slice) in one run: builds the work queue from every US attached to the slice, keeps the implementable ones (US `ready` with inline `subtasks`, or linked SPEC `ready`), orders them by backbone position, creates one `feat/<slice-id>` branch, and walks the queue back-to-back with no PM stop between stories — the one deliberate exception to af's single-phase-per-session rule. Skips US that are not `ready` (they need `/af-create-spec` first) and reports them, halts the whole run on a genuine blocker, and produces one combined test handoff at the end. It never writes SPECs and never flips a US to `done` — the implemented US are left `active` for the PM's single review pass. Requires the slice to be `in-progress` (points the PM at `/af-review-slice` if it is still `planning`).
+
+### Fixed
+- `/af-implement-spec` now actually carries the `git checkout -b feat/<ID>` branch step. v0.13.2 documented it in the changelog but never added it to `commands/af-implement-spec.md`; the step is now present (as step 3, from `main`).
+
 ## v0.13.2 — 2026-06-09
 
 ### Changed

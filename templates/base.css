@@ -1,0 +1,275 @@
+/*
+ * af base stylesheet
+ *
+ * A dependency-free starting point so apps built with af are not shipped
+ * unstyled. Drop it into the host app and load it before any app-specific
+ * CSS, or copy the tokens into the project's own system.
+ *
+ * Theme: automatic detection via `prefers-color-scheme`, with **dark as the
+ * fallback**. The :root tokens below are the dark theme, so any browser that
+ * reports no preference (or cannot report one) renders dark. A light system
+ * preference overrides them through the media query further down.
+ *
+ * Everything is driven by custom properties — override the tokens in :root
+ * to rebrand without touching the rules.
+ */
+
+/* ---- Design tokens (dark = default/fallback) ---------------------------- */
+:root {
+  color-scheme: dark light;
+
+  --color-bg: #14161a;
+  --color-surface: #1d2027;
+  --color-surface-raised: #262a33;
+  --color-border: #353a45;
+  --color-text: #e6e8ec;
+  --color-text-muted: #9aa3b2;
+  --color-accent: #6ea8fe;
+  --color-accent-contrast: #0b1220;
+  --color-focus: #6ea8fe;
+  --color-danger: #f1707b;
+  --color-code-bg: #0f1115;
+
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Fira Code", Menlo,
+    Consolas, monospace;
+
+  --space: 1rem;
+  --radius: 8px;
+  --max-width: 70ch;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+/* ---- Light theme (only when the system asks for it) -------------------- */
+@media (prefers-color-scheme: light) {
+  :root {
+    --color-bg: #ffffff;
+    --color-surface: #f6f7f9;
+    --color-surface-raised: #ffffff;
+    --color-border: #d9dde3;
+    --color-text: #1a1d22;
+    --color-text-muted: #5a6472;
+    --color-accent: #2f6fed;
+    --color-accent-contrast: #ffffff;
+    --color-focus: #2f6fed;
+    --color-danger: #c0303c;
+    --color-code-bg: #f0f2f5;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.06);
+  }
+}
+
+/* ---- Reset / base ------------------------------------------------------ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  tab-size: 4;
+}
+
+body {
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Page content stays readable on wide screens. */
+main {
+  max-width: var(--max-width);
+  margin-inline: auto;
+  padding: calc(var(--space) * 2) var(--space);
+}
+
+/* ---- Typography -------------------------------------------------------- */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  line-height: 1.2;
+  font-weight: 650;
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: 2rem;
+}
+h2 {
+  font-size: 1.5rem;
+}
+h3 {
+  font-size: 1.25rem;
+}
+
+p,
+ul,
+ol,
+blockquote,
+table,
+pre {
+  margin-block: var(--space);
+}
+
+a {
+  color: var(--color-accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  text-decoration: none;
+}
+
+small {
+  color: var(--color-text-muted);
+  font-size: 0.875em;
+}
+
+blockquote {
+  padding-inline-start: var(--space);
+  border-inline-start: 3px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+/* ---- Code -------------------------------------------------------------- */
+code,
+kbd,
+samp,
+pre {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+code {
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background-color: var(--color-code-bg);
+}
+
+pre {
+  padding: var(--space);
+  border-radius: var(--radius);
+  background-color: var(--color-code-bg);
+  overflow-x: auto;
+}
+
+pre code {
+  padding: 0;
+  background: none;
+}
+
+/* ---- Forms & buttons --------------------------------------------------- */
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 0.5em 0.65em;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+button,
+[type="button"],
+[type="submit"],
+[type="reset"] {
+  width: auto;
+  padding: 0.55em 1.1em;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background-color: var(--color-accent);
+  color: var(--color-accent-contrast);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:hover,
+[type="button"]:hover,
+[type="submit"]:hover,
+[type="reset"]:hover {
+  filter: brightness(1.08);
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Visible, theme-aware focus ring for keyboard users. */
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* ---- Surfaces, tables, media ------------------------------------------ */
+.card {
+  padding: var(--space);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 0.5em 0.75em;
+  border-bottom: 1px solid var(--color-border);
+  text-align: start;
+}
+
+th {
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--color-border);
+}
+
+img,
+picture,
+svg,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Respect users who ask for less motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

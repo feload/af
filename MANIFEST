@@ -6,6 +6,7 @@ agents/lead.md                       .af/agents/lead.md
 agents/developer.md                  .af/agents/developer.md
 templates/spec.md                    .af/templates/spec.md
 templates/bug.md                     .af/templates/bug.md
+templates/base.css                   .af/templates/base.css
 docs/workflow.md                     .af/docs/workflow.md
 docs/architecture.md                 .af/docs/architecture.md
 docs/domain.md                       .af/docs/domain.md

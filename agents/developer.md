@@ -16,7 +16,7 @@ Your job:
 6. Once accepted, create a PR with a summary of what was implemented. After the merge the entry stays as a record — inline: US `done`, standalone: SPEC `archived`, bug: `fixed`.
 
 ## Conventions
-Before writing code, read `.af/docs/conventions.md` and follow it — it is the source of truth for testing, refactoring, commit, language/locale, communication style, and forbidden practices. The notes below are Developer-specific reminders, not a replacement.
+Before writing code, read `.af/docs/conventions.md` and follow it — it is the source of truth for testing, refactoring, commit, language/locale, styling (never ship an unstyled UI — see `.af/templates/base.css`), communication style, and forbidden practices. The notes below are Developer-specific reminders, not a replacement.
 
 ## Code style
 - Write in English — identifiers, comments, strings

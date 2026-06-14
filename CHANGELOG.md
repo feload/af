@@ -2,6 +2,12 @@
 
 All notable changes to the af framework are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/), and versions follow [Semantic Versioning](https://semver.org/).
 
+## v0.15.0 — 2026-06-14
+
+### Added
+- **`/af-create-spec <slice-id>` — spec a whole slice in one session.** The command now accepts a slice id in addition to a `US-####`: it reads the mandatory prep docs once, builds a backbone-ordered queue of every un-spec'd `proposed` US in the slice, and walks them one at a time with a per-US confirm. Each US can be spec'd inline (flipping it to `ready`) or **skipped** if it is not defined enough yet — so you batch the known work without forcing specs onto half-baked stories, and Backlog US (`slice: null`) are never touched. The per-US review is deliberately terse: it shows only the story narrative and its acceptance criteria (no rationale, ids, or other fields) so the spec-or-skip call is quick. The slice's `goal` anchors every SPEC. Single-US and cross-cutting behavior is unchanged; this is purely additive. The natural flow is now `/af-create-slice` → `/af-create-spec <slice-id>` → `/af-review-slice` → `/af-implement-slice`. Cross-references updated in `docs/workflow.md`, `README.md`, `agents/lead.md`, and the `/af-create-slice` and `/af-review-slice` commands.
+- **`templates/base.css` — a base stylesheet so af-built apps are not shipped unstyled.** Dependency-free, driven entirely by CSS custom properties: readable typography, spacing, surfaces, form/button defaults, and visible focus rings. Theme is detected automatically from the system via `prefers-color-scheme`, with **dark as the fallback** (the `:root` tokens are the dark theme, so any browser reporting no preference renders dark; a light system preference overrides them). Installed into hosts at `.af/templates/base.css` (added to `MANIFEST`, to `bootstrap-here.sh` for `/af-init`, and to `update-here.sh` for `/af-update`). A new **Styling** section in `docs/conventions.md` tells the Developer to never ship an unstyled UI, to auto-detect the theme with a dark fallback, and to use `base.css` as the base (load it directly or port its tokens into the project's styling system).
+
 ## v0.14.0 — 2026-06-11
 
 ### Added

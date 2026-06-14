@@ -43,7 +43,7 @@ effort: medium
 **Scope (what this command does *not* do):**
 
 - It does not edit `releases/<slice-id>.json` — the PM flips `status` manually after reviewing the verdict.
-- It does not write SPECs — `no SPEC` and `pending Lead` rows are resolved by running `/af-create-spec` in separate sessions.
+- It does not write SPECs — `no SPEC` and `pending Lead` rows are resolved by running `/af-create-spec <slice-id>` (specs every un-spec'd US in the slice in one pass) or `/af-create-spec <US-####>` for a single story.
 - It does not chain into `/af-create-spec` or `/af-implement-spec`.
 
 **Stop here.** Slice review is its own session.

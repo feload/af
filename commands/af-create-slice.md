@@ -46,7 +46,7 @@ effort: medium
 **Scope (what this command does *not* do):**
 
 - It does not flip an existing slice's status to `in-progress` or `released` — status transitions are PM-driven edits to the slice file. Re-run `build-usm.py` after the edit.
-- It does not write SPECs — that is `/af-create-spec`, one session per US.
+- It does not write SPECs — that is `/af-create-spec`. Pass it this slice's id to spec every un-spec'd US in the slice in one session, or a single `US-####` to spec one at a time.
 - It does not add new Activities — those belong to `/af-create-backbone`.
 
-**Stop here.** Slice planning is its own session. The PM runs `/af-create-spec` in separate sessions for each US in the slice, and `/af-review-slice` before flipping `planning → in-progress`.
+**Stop here.** Slice planning is its own session. Next, the PM runs `/af-create-spec <slice-id>` to spec the slice's US in one pass (or `/af-create-spec <US-####>` one at a time), and `/af-review-slice` before flipping `planning → in-progress`.

@@ -8,7 +8,7 @@ For the public-facing description, see [README.md](README.md).
 
 - `agents/` — role prompts (`lead.md`, `developer.md`)
 - `commands/` — canonical source of slash commands. Installed into `~/.claude/commands/` by default, or `.claude/commands/` under `--local`
-- `templates/` — SPEC and BUG SPEC templates
+- `templates/` — SPEC and BUG SPEC templates, plus `base.css` (a dependency-free base stylesheet with automatic `prefers-color-scheme` theming and a dark fallback, installed into the host so apps are not shipped unstyled)
 - `docs/workflow.md` — the workflow rules
 - `docs/usm.md`, `docs/usm/{index.html,styles.css}` — USM viewer + schema doc
 - `docs/architecture.md`, `docs/domain.md`, `docs/conventions.md` — placeholder templates for host-side context, populated by `/af-init` in the host

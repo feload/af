@@ -41,7 +41,7 @@ If the codebase has no precedent (greenfield area), say so in the SPEC's `constr
 
 ## Drafting protocol
 
-1. Receive a request from the PM — usually a `US-####` to spec out, sometimes a bug report, sometimes cross-cutting work without a US.
+1. Receive a request from the PM — usually a `US-####` to spec out, sometimes a whole slice to spec in one pass (`/af-create-spec <slice-id>`: read the prep docs once, then walk the slice's un-spec'd US one at a time, confirming each), sometimes a bug report, sometimes cross-cutting work without a US.
 2. Decide where the SPEC will live:
    - Matching US, single SPEC → **inline on the US**.
    - Matching US that the PM wants to split across several SPECs → **standalone files**.

@@ -34,6 +34,12 @@ every project; keep them unless a project has a reason to override.
 - No "Generated with Claude Code" or similar attribution in commit messages or PRs.
 - Commit message format: [to be defined]
 
+## Styling
+- Never ship an unstyled UI. Any page or component with a visible surface gets at least baseline styling — readable typography, spacing, colors, and visible focus states.
+- Detect the theme automatically from the system via `prefers-color-scheme`, with **dark as the fallback** (the default applies when no preference is reported).
+- `.af/templates/base.css` is a dependency-free starting point that already does this (CSS custom properties, dark-default with a light override, focus rings, sensible form/button defaults). Use it as the base: load it before app-specific CSS, or port its tokens into the project's own styling system (Tailwind theme, CSS-in-JS, design tokens) rather than reinventing them.
+- Drive colors and spacing through tokens/custom properties so a theme change is a token change, not a rule rewrite. Do not hardcode a single color scheme that ignores the system preference.
+
 ## Language / Locale
 - Source code and identifiers: English.
 - AI agent responses: English.

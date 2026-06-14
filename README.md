@@ -19,7 +19,7 @@ The result: short, predictable AI sessions that stop where you expect them to.
 ```
 PM: backbone exists? if not → /af-create-backbone (Activities + Steps in data.js)
 PM: /af-create-story → US-#### proposed under a Step (slice: null, Backlog)
-PM: /af-create-spec → Lead writes SPEC inline on the US (or a standalone file for cross-cutting / multi-SPEC work) → PM confirms → US status: ready
+PM: /af-create-spec <US-#### | slice-id> → Lead writes SPEC inline on the US (one US, or every un-spec'd US in a slice in one pass) → PM confirms → US status: ready
 Developer: /af-implement-spec <US-####|SPEC-####> → implement subtasks + write tests → hand off test tree and run commands to PM
 PM: review + run tests → US status: done (standalone SPEC: approved)
 Developer: create PR
@@ -136,7 +136,7 @@ Before any feature work, two things must exist in the host project:
 ### Feature work
 
 1. **PM runs `/af-create-story`** to file a new US under an existing Step. The Lead suggests the Step that best fits the story; PM confirms. New Stories land in Backlog (`slice: null`) by default.
-2. **PM runs `/af-create-spec`** in a new session and points the Lead at the US. By default the SPEC content is written **inline on the US** (six extra fields on `source/stories/US-XXXX.json`); a standalone file under `source/specs/` is only created for cross-cutting work or US that need multiple SPECs.
+2. **PM runs `/af-create-spec`** and points the Lead at the work. Pass a `US-####` to spec one story, or a slice id to spec **every un-spec'd US in that slice in one session** — US by US, skipping any that is not defined enough yet (Backlog stories are never touched). By default the SPEC content is written **inline on the US** (six extra fields on `source/stories/US-XXXX.json`); a standalone file under `source/specs/` is only created for cross-cutting work or US that need multiple SPECs.
 3. **Lead asks one clarifying question at a time** until the SPEC is unambiguous, then drafts it using the [SPEC template](templates/spec.md).
 4. **PM reviews and confirms.** On the inline path the US `status` flips from `proposed` to `ready`; on the standalone path the SPEC `status` flips from `draft` to `ready`.
 5. **PM runs `/af-implement-spec`** with either the US id (inline) or the SPEC id (standalone) and hands it to the Developer. To implement a whole release at once, **`/af-implement-slice <slice-id>`** walks every ready US in an `in-progress` slice back-to-back on one branch — the one command that deliberately spans multiple stories in a single session.
